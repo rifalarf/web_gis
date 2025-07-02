@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Clickbar\Magellan\Data\Geometries\MultiLineString;
 
 class Segment extends Model
 {
@@ -13,8 +14,8 @@ class Segment extends Model
     ];
 
     protected $casts = [
-        // geometry → array; switch to Magellan’s MultiLineString later if you like
-        'geometry' => 'array',
+        // Magellan’s MultiLineString
+        'geometry' => MultiLineString::class,
     ];
 
     public function ruas()
