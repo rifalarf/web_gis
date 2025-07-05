@@ -5,12 +5,12 @@ use Inertia\Inertia;
 use App\Http\Controllers\GeojsonController;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome');
+    return Inertia::render('Dashboard');
 })->name('home');
 
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->name('dashboard');
 
 Route::middleware(['auth','admin'])->group(function () {
     Route::post   ('/geojson/upload', [GeojsonController::class,'upload'])->name('geojson.upload');
