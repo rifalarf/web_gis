@@ -12,7 +12,7 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Menu, Search, Map, Route } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -34,9 +34,14 @@ const activeItemStyles = computed(
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
+        title: 'Peta',
+        href: '/',
+        icon: Map,
+    },
+    {
+        title: 'Daftar Jalan',
+        href: '/ruas',
+        icon: Route,
     },
 ];
 
