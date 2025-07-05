@@ -52,14 +52,21 @@ class GeojsonController extends Controller
                     $p = $f['properties'];
                     $rawGeometry = json_encode($f['geometry']);        // just the geometry block!
                     $geometry    = app(GeoJsonParser::class)->parse($rawGeometry);
+                    $rawKondisi = $p['Kondisi'] ?? null;
                     /** @var MultiLineString $geometry */
+
+                    $kondisi = match (strtolower(trim($rawKondisi))) {
+                        'rusak ringan' => 'rusak_ringan',
+                        'rusak berat'  => 'rusak_berat',
+                        default        => $rawKondisi,               // "baik", "sedang", or null
+                    };
 
                     Segment::create([
                         'ruas_code' => $code,
                         'sta'       => $p['STA']       ?? null,
                         'jens_perm' => $p['Jens_Perm'] ?? null,
-                        'kondisi'   => $p['Kondisi']   ?? null,
-                        'geometry'  => $geometry,      // works with the cast we set earlier
+                        'kondisi'   => $kondisi,
+                        'geometry'  => $geometry,
                     ]);
                 }
             }

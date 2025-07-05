@@ -79,19 +79,22 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="overflow-x-auto">
           <table class="min-w-full border border-gray-300 dark:border-gray-600">
             <thead class="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th class="px-4 py-2 text-left">CODE</th>
-                <th class="px-4 py-2 text-left">Nama Ruas</th>
-                <th class="px-4 py-2 text-left">Aksi</th>
-              </tr>
+                <tr>
+                    <th class="px-4 py-2 text-left">No</th>
+                    <!-- <th class="px-4 py-2 text-left">CODE</th> -->
+                    <th class="px-4 py-2 text-left">Nama Ruas</th>
+                    <th class="px-4 py-2 text-left">Aksi</th>
+                </tr>
             </thead>
+
             <tbody>
               <tr
-                v-for="r in props.ruas"
+                 v-for="(r, i) in props.ruas"
                 :key="r.code"
                 class="border-t border-gray-200 dark:border-gray-700"
               >
-                <td class="px-4 py-2">{{ r.code }}</td>
+                <td class="px-4 py-2">{{ i + 1 }}</td>
+                <!-- <td class="px-4 py-2">{{ r.code }}</td> -->
                 <td class="px-4 py-2">{{ r.nm_ruas }}</td>
                 <td class="px-4 py-2 space-x-3">
                   <!-- “Detail” uses plain <a> to benefit from inertia-link prefetch -->
