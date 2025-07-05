@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\GeojsonController;
 use App\Http\Controllers\RuasController;
+use App\Http\Controllers\Api\MapApiController;
 
 Route::get('/', function () {
     return Inertia::render('Dashboard');
@@ -12,6 +13,8 @@ Route::get('/', function () {
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->name('home');
+
+Route::get('/api/segments.geojson', [MapApiController::class, 'index']);
 
 Route::get('/ruas',          [RuasController::class,'index']);
 Route::get('/ruas/{code}',   [RuasController::class,'show']);
