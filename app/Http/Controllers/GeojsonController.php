@@ -8,6 +8,7 @@ use App\Models\{Ruas, Segment};
 use Clickbar\Magellan\IO\Parser\Geojson\GeoJsonParser;
 use Clickbar\Magellan\Data\Geometries\MultiLineString;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class GeojsonController extends Controller
 {
@@ -21,6 +22,7 @@ class GeojsonController extends Controller
             ->groupBy(fn ($f) => $f['properties']['CODE']);
 
         DB::transaction(function () use ($groups, $request) {
+            Cache::forget('segments_geojson');
 
             foreach ($groups as $code => $features) {
 
@@ -78,6 +80,7 @@ class GeojsonController extends Controller
     public function destroy(string $code)
     {
         Ruas::where('code', $code)->delete();   // segments auto-cascade
+        Cache::forget('segments_geojson');
         return back()->with('success', "Ruas $code deleted.");
     }
 }
