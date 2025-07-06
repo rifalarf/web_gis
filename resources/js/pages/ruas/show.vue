@@ -30,12 +30,13 @@ const breadcrumbs: BreadcrumbItem[] = [
       <!-- Map -->
       <div class="relative min-h-[70vh] flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
         <LeafletMap
-          :geojson="props.geojson"
-          :autoFit="true"
-          :showLegend="true"
-          :detailPopups="true"
-          class="absolute inset-0 rounded-b-xl"
+            :geojson="props.geojson"
+            :autoFit="true"
+            :showLegend="true"
+            :detailPopups="true"
+            class="absolute inset-0 rounded-b-xl"
         />
+
       </div>
     </div>
   </AppLayout>

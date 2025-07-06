@@ -37,11 +37,14 @@ onMounted(async () => {
 
         <!-- map once data is ready -->
         <LeafletMap
-        v-if="geojson"
-        :geojson="geojson"
-        :autoFit="true"
-        :showLegend="true"
+            v-if="geojson"
+            :geojson="geojson"
+            :autoFit="true"
+            :showLegend="true"
+            :detailPopups="false"
+            class="absolute inset-0 rounded-b-xl"
         />
+
 
 
       </div>

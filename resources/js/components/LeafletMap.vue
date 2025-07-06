@@ -39,7 +39,7 @@ onMounted(() => {
     },
   )
 
-  const map = L.map(mapEl.value!, { layers: [osm] }).setView([-7.2, 107.9], 10)
+  const map = L.map(mapEl.value!, { layers: [osm] }).setView([-7.3, 107.91], 10)
 
   /* 2. Basemap switcher (top-right) */
   L.control.layers(
@@ -49,40 +49,90 @@ onMounted(() => {
   ).addTo(map)
 
   /* 3. GeoJSON layer with style + pop-ups */
-  const lineLayer = L.geoJSON(undefined, {
-    style: (feat?: Feature) => {
-      const k = (feat?.properties as any)?.kondisi as KondisiKey | undefined
-      return { color: colour[k ?? 'default'], weight: 3 }
-    },
-    onEachFeature: (feat?: Feature, layer?: L.Layer) => {
-      if (!feat || !layer) return
-      const p = feat.properties as any
-      layer.bindPopup(`
-        <div class="space-y-1 text-sm">
-          <div><strong>CODE:</strong> ${p.code}</div>
-          <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
-          <div><strong>Kondisi:</strong> ${p.kondisi ?? '−'}</div>
-          <a href="/ruas-jalan/${p.code}" class="text-blue-600 underline">Detail</a>
-        </div>
-      `)
+  /* ───────── highlight state ───────── */
+let selectedGroup: string | null = null            // ruas CODE or segment-id
 
-      const html = props.detailPopups
-      ? `
-          <div class="space-y-1 text-sm">
-            <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
-            <div><strong>Jenis Permukaan:</strong> ${p.jens_perm ?? '−'}</div>
-            <div><strong>Kondisi:</strong> ${p.kondisi ?? '−'}</div>
-          </div>`
-      : `
-          <div class="space-y-1 text-sm">
-            <div><strong>CODE:</strong> ${p.code}</div>
-            <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
-            <div><strong>Kondisi:</strong> ${p.kondisi ?? '−'}</div>
-            <a href="/ruas-jalan/${p.code}" class="text-blue-600 underline">Detail</a>
-          </div>`;
-    },
+/* group layers differently for the 2 modes */
+const groupLayers: Record<string, L.Path[]> = {}   // key ⇒ array of paths
 
-  }).addTo(map)
+/* helper – make a unique id per segment */
+function segId(f: Feature) {
+  // geometry index + STA is usually unique; fall back to stable string
+  return `${(f.properties as any).sta}-${L.stamp(f)}`;
+}
+
+/* ───────── geojson layer ─────────── */
+const lineLayer = L.geoJSON(undefined, {
+  style: (feat?: Feature) => {
+    const k = (feat?.properties as any)?.kondisi as KondisiKey | undefined
+    return { color: colour[k ?? 'default'], weight: 3, lineCap: 'round' }
+  },
+
+  onEachFeature: (feat?: Feature, layer?: L.Layer) => {
+    if (!feat || !layer) return
+    const p    = feat.properties as any
+    const code = p.code as string
+    const key  = props.detailPopups ? segId(feat) : code   // group key
+
+    /* === build group map === */
+    if (!groupLayers[key]) groupLayers[key] = []
+    groupLayers[key].push(layer as L.Path)
+
+    /* === popup content === */
+    const html = props.detailPopups
+      ? `<div class="space-y-1 text-sm">
+           <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
+           <div><strong>Jenis Permukaan:</strong> ${p.jens_perm ?? '−'}</div>
+           <div><strong>Kondisi:</strong> ${p.kondisi ?? '−'}</div>
+         </div>`
+      : `<div class="space-y-1 text-sm">
+           <div><strong>CODE:</strong> ${code}</div>
+           <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
+           <a href="/ruas-jalan/${code}" class="text-blue-600 underline">Detail</a>
+         </div>`
+    layer.bindPopup(html)
+
+    /* === hover highlight === */
+    layer.on('mouseover', () => toggleHighlight(key, true))
+    layer.on('mouseout',  () => {
+      if (selectedGroup !== key) toggleHighlight(key, false)
+    })
+
+    /* === click to lock highlight === */
+    layer.on('click', () => {
+      if (selectedGroup && selectedGroup !== key) toggleHighlight(selectedGroup, false)
+      selectedGroup = key
+      toggleHighlight(key, true)
+    })
+
+    /* clear highlight when popup closed */
+    layer.on('popupclose', () => {
+      toggleHighlight(key, false)
+      selectedGroup = null
+    })
+  },
+}).addTo(map)
+
+/* click on empty map area clears selection */
+map.on('click', (e) => {
+  if ((e as any).originalEvent.target.tagName === 'CANVAS') { // tile background
+    if (selectedGroup) toggleHighlight(selectedGroup, false)
+    selectedGroup = null
+  }
+})
+
+/* ───────── helper: style on/off ───────── */
+function toggleHighlight(key: string, on: boolean) {
+  (groupLayers[key] || []).forEach((l) =>
+    l.setStyle({
+      weight: on ? 6 : 3,
+      dashArray: on ? '0' : undefined,   // ← here
+    }).bringToFront(),
+  )
+}
+
+
+
 
   /* 4. Reactive load / refresh */
   watch(

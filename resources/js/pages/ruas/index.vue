@@ -44,11 +44,11 @@ const breadcrumbs: BreadcrumbItem[] = [
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <!-- Top 3 little cards (keep starter-kit look) -->
-      <div class="grid auto-rows-min gap-4 md:grid-cols-3">
+      <div class="grid auto-rows-min gap-4 md:grid-cols-4">
         <div
-          v-for="n in 3"
+          v-for="n in 4"
           :key="n"
-          class="relative aspect-video overflow-hidden rounded-xl border
+          class="relative h-24 w-full overflow-hidden rounded-xl border
                  border-sidebar-border/70 dark:border-sidebar-border"
         >
           <PlaceholderPattern />
