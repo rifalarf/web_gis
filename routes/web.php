@@ -16,14 +16,14 @@ Route::get('dashboard', function () {
 
 Route::get('/api/segments.geojson', [MapApiController::class, 'index']);
 
-Route::get('/ruas',          [RuasController::class,'index']);
-Route::get('/ruas/{code}',   [RuasController::class,'show']);
+Route::get('/ruas-jalan',          [RuasController::class,'index']);
+Route::get('/ruas-jalan/{code}',   [RuasController::class,'show']);
 
 
 Route::middleware('auth')->group(function () {
     Route::post   ('/geojson/upload', [GeojsonController::class,'upload'])
          ->name('geojson.upload');
-    Route::delete('/ruas/{code}',     [GeojsonController::class,'destroy'])
+    Route::delete('/ruas-jalan/{code}',     [GeojsonController::class,'destroy'])
          ->name('ruas.destroy');
 });
 

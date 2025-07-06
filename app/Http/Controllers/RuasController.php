@@ -39,8 +39,32 @@ class RuasController extends Controller
      */
     public function show(string $code)
     {
-        $ruas = Ruas::with('segments')->where('code',$code)->firstOrFail();
-        return Inertia::render('ruas/show', compact('ruas'));
+        $ruas = Ruas::with('segments')->where('code', $code)->firstOrFail();
+
+        // build FeatureCollection for this ruas only
+        $features = $ruas->segments->map(function ($s) {
+            return [
+                'type'       => 'Feature',
+                'properties' => [
+                    'code'       => $s->ruas_code,
+                    'nm_ruas'    => $s->ruas->nm_ruas,
+                    'sta'        => $s->sta,
+                    'jens_perm'  => $s->jens_perm,
+                    'kondisi'    => $s->kondisi,
+                ],
+                'geometry'   => $s->geometry->jsonSerialize(),
+            ];
+        });
+
+        $geojson = [
+            'type'     => 'FeatureCollection',
+            'features' => $features,
+        ];
+
+        return Inertia::render('ruas/show', [
+            'ruas'    => $ruas->only('code', 'nm_ruas'),
+            'geojson' => $geojson,
+        ]);
     }
 
     /**

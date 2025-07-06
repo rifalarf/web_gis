@@ -40,7 +40,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Daftar Jalan',
-        href: '/ruas',
+        href: '/ruas-jalan',
         icon: Route,
     },
 ];

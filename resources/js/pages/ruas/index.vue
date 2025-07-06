@@ -33,7 +33,7 @@ function destroyRow(code: string) {
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Ruas',
-        href: '/ruas',
+        href: '/ruas-jalan',
     },
 ];
 </script>

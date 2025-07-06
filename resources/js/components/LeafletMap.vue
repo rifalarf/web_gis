@@ -8,6 +8,7 @@ const props = defineProps<{
   geojson: FeatureCollection
   autoFit?: boolean
   showLegend?: boolean
+  detailPopups?: boolean
 }>()
 
 /* ── colour palette ────────────────────────────────────── */
@@ -64,7 +65,23 @@ onMounted(() => {
           <a href="/ruas-jalan/${p.code}" class="text-blue-600 underline">Detail</a>
         </div>
       `)
+
+      const html = props.detailPopups
+      ? `
+          <div class="space-y-1 text-sm">
+            <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
+            <div><strong>Jenis Permukaan:</strong> ${p.jens_perm ?? '−'}</div>
+            <div><strong>Kondisi:</strong> ${p.kondisi ?? '−'}</div>
+          </div>`
+      : `
+          <div class="space-y-1 text-sm">
+            <div><strong>CODE:</strong> ${p.code}</div>
+            <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
+            <div><strong>Kondisi:</strong> ${p.kondisi ?? '−'}</div>
+            <a href="/ruas-jalan/${p.code}" class="text-blue-600 underline">Detail</a>
+          </div>`;
     },
+
   }).addTo(map)
 
   /* 4. Reactive load / refresh */
