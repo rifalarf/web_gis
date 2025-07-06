@@ -3,14 +3,14 @@ import { onMounted, ref, watch } from 'vue'
 import * as L from 'leaflet'
 import type { FeatureCollection, Feature } from 'geojson'
 
-/* ─── props ────────────────────────────────────────────── */
+/* ── props ─────────────────────────────────────────────── */
 const props = defineProps<{
   geojson: FeatureCollection
   autoFit?: boolean
   showLegend?: boolean
 }>()
 
-/* ─── colour map ───────────────────────────────────────── */
+/* ── colour palette ────────────────────────────────────── */
 const colour = {
   baik:         '#22c55e',
   sedang:       '#eab308',
@@ -18,34 +18,48 @@ const colour = {
   rusak_berat:  '#ef4444',
   default:      '#9ca3af',
 } as const
+type KondisiKey = keyof typeof colour
 
-type KondisiKey = keyof typeof colour   //  'baik' | 'sedang' | ...
-
-/* ─── DOM ref + Leaflet init ───────────────────────────── */
+/* ── DOM ref ───────────────────────────────────────────── */
 const mapEl = ref<HTMLElement | null>(null)
 
+/* ── init once mounted ─────────────────────────────────── */
 onMounted(() => {
-  const map = L.map(mapEl.value!).setView([-7.2, 107.9], 10)
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  /* 1. Map & basemap layers */
+  const osm  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap',
     maxZoom: 19,
-  }).addTo(map)
+  })
+  const esri = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      attribution:
+        'Tiles &copy; Esri — Source: Esri, DeLorme, NAVTEQ, USGS, etc.',
+    },
+  )
 
-  /* create layer **once** with style + pop-up callbacks */
-  const layer = L.geoJSON(undefined, {
+  const map = L.map(mapEl.value!, { layers: [osm] }).setView([-7.2, 107.9], 10)
+
+  /* 2. Basemap switcher (top-right) */
+  L.control.layers(
+    { OpenStreetMap: osm, Esri: esri },
+    {},
+    { position: 'topright', collapsed: false },
+  ).addTo(map)
+
+  /* 3. GeoJSON layer with style + pop-ups */
+  const lineLayer = L.geoJSON(undefined, {
     style: (feat?: Feature) => {
       const k = (feat?.properties as any)?.kondisi as KondisiKey | undefined
       return { color: colour[k ?? 'default'], weight: 3 }
     },
-    onEachFeature: (feat?: Feature, l?: L.Layer) => {
-      if (!feat || !l) return
+    onEachFeature: (feat?: Feature, layer?: L.Layer) => {
+      if (!feat || !layer) return
       const p = feat.properties as any
-      l.bindPopup(`
+      layer.bindPopup(`
         <div class="space-y-1 text-sm">
           <div><strong>CODE:</strong> ${p.code}</div>
           <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
-          <div><strong>STA:</strong> ${p.sta}</div>
           <div><strong>Kondisi:</strong> ${p.kondisi ?? '−'}</div>
           <a href="/ruas-jalan/${p.code}" class="text-blue-600 underline">Detail</a>
         </div>
@@ -53,55 +67,65 @@ onMounted(() => {
     },
   }).addTo(map)
 
-  /* reactively refresh data */
+  /* 4. Reactive load / refresh */
   watch(
     () => props.geojson,
     (data) => {
       if (!data) return
-      layer.clearLayers().addData(data as any)
+      lineLayer.clearLayers().addData(data as any)
 
-      if (props.autoFit && layer.getBounds().isValid()) {
-        map.fitBounds(layer.getBounds(), { padding: [20, 20] })
+      if (props.autoFit && lineLayer.getBounds().isValid()) {
+        map.fitBounds(lineLayer.getBounds(), { padding: [20, 20] })
       }
     },
     { immediate: true },
   )
+
+/* 5. Legend control (bottom-left) */
+if (props.showLegend) {
+  /* ── build the inner HTML FIRST ── */
+  const legendHtml = Object.entries(colour)
+    .filter(([k]) => k !== 'default')
+    .map(
+      ([k, c]) => `
+        <div class="flex items-center gap-2 mb-1 last:mb-0">
+          <span style="background:${c};width:24px;height:10px;border-radius:2px;display:inline-block"></span>
+          ${k.replace('_', ' ').replace(/\b\\w/g, (l) => l.toUpperCase())}
+        </div>`,
+    )
+    .join('')
+
+  /* ── extend L.Control AFTER legendHtml exists ── */
+  const Legend = L.Control.extend({
+    options: { position: 'bottomleft' },
+    onAdd() {
+      const div = L.DomUtil.create(
+        'div',
+        'rounded-lg bg-white/80 p-2 text-xs shadow backdrop-blur dark:bg-gray-800/80',
+      )
+      div.innerHTML = legendHtml
+      return div
+    },
+  })
+
+  new Legend().addTo(map)
+}
+
+
 })
 </script>
 
 <template>
-  <div ref="mapEl" class="h-full w-full">
-    <!-- legend -->
-    <div
-      v-if="showLegend"
-      class="absolute bottom-4 left-4 rounded-lg bg-white/80 p-2 text-xs shadow
-             backdrop-blur dark:bg-gray-800/80"
-    >
-      <LegendRow label="Baik"          :color="colour.baik" />
-      <LegendRow label="Sedang"        :color="colour.sedang" />
-      <LegendRow label="Rusak Ringan"  :color="colour.rusak_ringan" />
-      <LegendRow label="Rusak Berat"   :color="colour.rusak_berat" />
-    </div>
-  </div>
+  <div ref="mapEl" class="relative h-full w-full" />
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-export default {
-  components: {
-    LegendRow: defineComponent({
-      props: { label: String, color: String },
-      template: `
-        <div class="flex items-center gap-2">
-          <span class="block h-3 w-6 rounded" :style="{ background: color }"></span>
-          <span>{{ label }}</span>
-        </div>
-      `,
-    }),
-  },
-}
-</script>
-
 <style scoped>
-.leaflet-container { height: 100%; width: 100%; }
+
+.leaflet-container,
+:host {                /* Vue 3 “host” selector */
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+}
 </style>

@@ -41,7 +41,6 @@ onMounted(async () => {
         :geojson="geojson"
         :autoFit="true"
         :showLegend="true"
-        class="absolute inset-0 rounded-b-xl"
         />
 
 
