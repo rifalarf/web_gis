@@ -14,21 +14,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 /* ── fetch GeoJSON once on mount ─────────────────────── */
-const geojson = ref<FeatureCollection | null>(null)
-const pointsGJ  = ref<FeatureCollection|null>(null)
-
-onMounted(async () => {
-  const res = await fetch('/api/segments.geojson')
-  geojson.value = await res.json()
-})
+const geojson  = ref<FeatureCollection>()
+const pointsGJ = ref<FeatureCollection>()
 
 onMounted(async () => {
   const [lines, points] = await Promise.all([
     fetch('/api/segments.geojson').then(r => r.json()),
     fetch('/api/kerusakan.geojson').then(r => r.json()),
   ])
-  geojson.value  = lines
-  pointsGJ.value = points
+  geojson.value  = lines  as FeatureCollection
+  pointsGJ.value = points as FeatureCollection
+
 })
 
 </script>
@@ -50,7 +46,7 @@ onMounted(async () => {
         <LeafletMap
             v-if="geojson"
             :geojson="geojson"
-            :pointsgeojson="pointsGJ"
+            :pointsGeojson="pointsGJ"
             :autoFit="true"
             :showLegend="true"
             :detailPopups="false"

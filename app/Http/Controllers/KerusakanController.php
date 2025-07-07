@@ -48,11 +48,7 @@ class KerusakanController extends Controller
         }
 
         /* make Point geometry (lon, lat, srid) ------------------------------ */
-        $data['point'] = new Point(
-            $data['lon'],
-            $data['lat'],
-            4326
-        );
+        $data['point'] = new Point($data['lon'], $data['lat'], 4326); // x = lon, y = lat
 
         Kerusakan::create($data);
 

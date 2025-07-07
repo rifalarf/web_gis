@@ -117,7 +117,7 @@ const lineLayer = L.geoJSON(undefined, {
 
 // red pin icon
 const pin = L.icon({
-  iconUrl: '/images/marker-red.svg',     // add any PNG/SVG to /public/images
+  iconUrl: '/images/map-pin.svg',     // add any PNG/SVG to /public/images
   iconSize:  [22, 34],
   iconAnchor:[11, 34],
 })
@@ -126,18 +126,21 @@ const pointLayer = L.geoJSON(undefined, {
   pointToLayer: (feat, latlng) => {
     const street = `https://www.google.com/maps?q=&layer=c&cbll=${latlng.lat},${latlng.lng}`
     const marker = L.marker(latlng, { icon: pin })
-    marker.bindPopup(buildDamagePopup(feat, street))
+    marker.bindPopup(buildDamagePopup(feat, latlng, street))
     return marker
   },
-})
+}).addTo(map)
 
-function buildDamagePopup(feat: Feature, streetUrl: string) {
+function buildDamagePopup(feat: Feature, ll: L.LatLng, streetUrl: string) {
   const p = feat.properties as any
+  const lat = ll.lat.toFixed(6)
+  const lon = ll.lng.toFixed(6)
   return `
     <div class="space-y-1 text-sm">
       ${p.image ? `<img src="${p.image}" class="mb-2 max-h-32 rounded">` : ''}
       <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
       <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
+      <div><strong>Koordinat:</strong> ${lat}, ${lon}</div>
       <a href="/kerusakan/${p.id}" class="text-blue-600 underline">Detail</a><br>
       <a href="${streetUrl}" target="_blank" class="text-green-600 underline">Street View</a>
     </div>
