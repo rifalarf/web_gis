@@ -19,6 +19,11 @@ const mainNavItems: NavItem[] = [
         href: '/ruas-jalan',
         icon: Route,
     },
+    {
+        title: 'Titik Kerusakan',
+        href: '/kerusakan',
+        icon: Route,
+    },
 ];
 
 const footerNavItems: NavItem[] = [

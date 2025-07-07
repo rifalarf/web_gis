@@ -8,6 +8,7 @@ use Clickbar\Magellan\Data\Geometries\Point;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class KerusakanController extends Controller
 {
@@ -15,9 +16,19 @@ class KerusakanController extends Controller
        List page (stub) – we’ll build the Inertia view later
     ----------------------------------------------------------------- */
     public function index()
-    {
-        return 'kerusakan index placeholder';
-    }
+{
+    $rows = Kerusakan::with('ruas')->get()->map(fn ($k) => [
+        'id'       => $k->id,
+        'sta'      => $k->sta,
+        'nm_ruas'  => $k->ruas->nm_ruas,
+        'lat'      => $k->point->getY(),   // Magellan helpers
+        'lon'      => $k->point->getX(),
+    ]);
+
+    return Inertia::render('kerusakan/index', [
+        'markers' => $rows,
+    ]);
+}
 
     /* -----------------------------------------------------------------
        Show the “add marker” form (stub)
