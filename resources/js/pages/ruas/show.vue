@@ -3,10 +3,11 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import LeafletMap from '@/components/LeafletMap.vue'
 import { Head } from '@inertiajs/vue3'
 import { type BreadcrumbItem } from '@/types'
+import type { FeatureCollection } from 'geojson'
 
 const props = defineProps<{
   ruas: { code: string; nm_ruas: string }
-  geojson: GeoJSON.FeatureCollection
+  geojson: FeatureCollection
 }>()
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -31,6 +32,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="relative min-h-[70vh] flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
         <LeafletMap
             :geojson="props.geojson"
+            :pointsgeojson="props.geojson"
             :autoFit="true"
             :showLegend="true"
             :detailPopups="true"

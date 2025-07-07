@@ -6,6 +6,7 @@ use App\Http\Controllers\GeojsonController;
 use App\Http\Controllers\RuasController;
 use App\Http\Controllers\Api\MapApiController;
 use App\Http\Controllers\KerusakanController;
+use App\Http\Controllers\Api\KerusakanApiController;
 
 Route::get('/', function () {
     return Inertia::render('Dashboard');
@@ -28,13 +29,14 @@ Route::middleware('auth')->group(function () {
          ->name('ruas.destroy');
 });
 
+Route::get('/api/kerusakan.geojson', [KerusakanApiController::class,'index']);
 
-Route::resource('titik-kerusakan', KerusakanController::class)
+Route::resource('kerusakan', KerusakanController::class)
      ->middleware(['auth'])     // create/edit/delete guarded
      ->except(['index','show']); // public can see
 
-Route::get ('/titik-kerusakan',        [KerusakanController::class,'index'])->name('kerusakan.index');
-Route::get ('/titik-kerusakan/{id}',   [KerusakanController::class,'show' ])->name('kerusakan.show');
+Route::get ('/kerusakan',        [KerusakanController::class,'index'])->name('kerusakan.index');
+Route::get ('/kerusakan/{id}',   [KerusakanController::class,'show' ])->name('kerusakan.show');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

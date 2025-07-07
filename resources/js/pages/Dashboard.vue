@@ -3,7 +3,7 @@
 import AppLayout from '@/layouts/AppLayout.vue'
 import PlaceholderPattern from '@/components/PlaceholderPattern.vue'
 import LeafletMap from '@/components/LeafletMap.vue'
-
+import type { FeatureCollection } from 'geojson'
 import { Head } from '@inertiajs/vue3'
 import { type BreadcrumbItem } from '@/types'
 import { onMounted, ref } from 'vue'
@@ -14,12 +14,23 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 /* ── fetch GeoJSON once on mount ─────────────────────── */
-const geojson = ref<GeoJSON.FeatureCollection | null>(null)
+const geojson = ref<FeatureCollection | null>(null)
+const pointsGJ  = ref<FeatureCollection|null>(null)
 
 onMounted(async () => {
   const res = await fetch('/api/segments.geojson')
   geojson.value = await res.json()
 })
+
+onMounted(async () => {
+  const [lines, points] = await Promise.all([
+    fetch('/api/segments.geojson').then(r => r.json()),
+    fetch('/api/kerusakan.geojson').then(r => r.json()),
+  ])
+  geojson.value  = lines
+  pointsGJ.value = points
+})
+
 </script>
 
 <template>
@@ -39,6 +50,7 @@ onMounted(async () => {
         <LeafletMap
             v-if="geojson"
             :geojson="geojson"
+            :pointsgeojson="pointsGJ"
             :autoFit="true"
             :showLegend="true"
             :detailPopups="false"
