@@ -72,12 +72,18 @@ function submit() {
   if (props.mode === 'create') {
     form.post(route('kerusakan.store'), { forceFormData: true })
   } else {
-    form.put(
+    form.transform(data => ({
+      ...data,
+      _method: 'PUT',          // ← add spoofing field
+    })).post(
       route('kerusakan.update', props.marker!.id),
       { forceFormData: true }
     )
   }
 }
+
+
+
 
 
 /* breadcrumbs */
