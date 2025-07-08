@@ -10,6 +10,8 @@ const props = defineProps<{
   autoFit?: boolean
   showLegend?: boolean
   detailPopups?: boolean
+  followPoints?: boolean
+  formMode?: boolean
 }>()
 
 /* ── colour palette ────────────────────────────────────── */
@@ -41,6 +43,7 @@ onMounted(() => {
   )
 
   const map = L.map(mapEl.value!, { layers: [osm] }).setView([-7.3, 107.91], 10)
+
 
   /* 2. Basemap switcher (top-right) */
   L.control.layers(
@@ -81,17 +84,25 @@ const lineLayer = L.geoJSON(undefined, {
     groupLayers[key].push(layer as L.Path)
 
     /* === popup content === */
-    const html = props.detailPopups
-      ? `<div class="space-y-1 text-sm">
+    const html = props.formMode
+  ? `<div class="space-y-1 text-sm">
+       <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
+       <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
+     </div>`
+  : props.detailPopups
+      ? /* existing segment-detail popup */
+        `<div class="space-y-1 text-sm">
            <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
            <div><strong>Jenis Permukaan:</strong> ${p.jens_perm ?? '−'}</div>
            <div><strong>Kondisi:</strong> ${p.kondisi ?? '−'}</div>
          </div>`
-      : `<div class="space-y-1 text-sm">
+      : /* dashboard popup */
+        `<div class="space-y-1 text-sm">
            <div><strong>CODE:</strong> ${code}</div>
            <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
            <a href="/ruas-jalan/${code}" class="text-blue-600 underline">Detail</a>
          </div>`
+
     layer.bindPopup(html)
 
     /* === hover highlight === */
@@ -183,13 +194,21 @@ function toggleHighlight(key: string, on: boolean) {
   )
 
   watch(
-    () => props.pointsGeojson,
-    (data) => {
-        if (!data) return
-        pointLayer.clearLayers().addData(data as any)
+  () => props.pointsGeojson,
+  (data) => {
+    if (!data) return
+    pointLayer.clearLayers().addData(data as any)
+
+    if (props.followPoints &&
+        data.features?.length === 1 &&
+        data.features[0].geometry.type === 'Point') {
+      const [lon, lat] = (data.features[0].geometry as any).coordinates
+      map.setView([lat, lon], map.getZoom() < 14 ? 14 : map.getZoom())
+    }
     },
     { immediate: true },
-    )
+  )
+
 
 
 /* 5. Legend control (bottom-left) */
@@ -224,6 +243,7 @@ if (props.showLegend) {
 
 
 })
+
 </script>
 
 <template>

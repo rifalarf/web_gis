@@ -52,7 +52,7 @@ function destroy(id: number) {
         <!-- Add button -->
         <div v-if="auth.user" class="mb-4">
           <a
-            href="/titik-kerusakan/create"
+            href="/kerusakan/create"
             class="btn-primary inline-block"
           >
             + Tambah Marker
@@ -85,7 +85,7 @@ function destroy(id: number) {
                 </td>
                 <td class="px-3 py-2 space-x-3">
                   <a
-                    :href="`/titik-kerusakan/${m.id}`"
+                    :href="`/kerusakan/${m.id}`"
                     class="text-blue-600 hover:underline dark:text-blue-400"
                   >
                     Detail
@@ -93,7 +93,7 @@ function destroy(id: number) {
                   <!-- show CRUD only for logged-in user -->
                   <template v-if="auth.user">
                     <a
-                      :href="`/titik-kerusakan/${m.id}/edit`"
+                      :href="`/kerusakan/${m.id}/edit`"
                       class="text-yellow-600 hover:underline dark:text-yellow-400"
                     >
                       Edit
