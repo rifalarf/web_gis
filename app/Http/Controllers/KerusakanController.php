@@ -84,10 +84,62 @@ class KerusakanController extends Controller
     /* -----------------------------------------------------------------
        Show single marker (stub)
     ----------------------------------------------------------------- */
-    public function show(int $id)
-    {
-        return "detail marker {$id} placeholder";
+    public function show(Kerusakan $kerusakan)
+{
+    /* ---------------------------------------------------------------
+       1.  Try to fetch the ruas this marker belongs to
+    ----------------------------------------------------------------*/
+    $ruas = $kerusakan->ruas;            // may be null if ruas deleted
+    $lines = $ruas
+        ? $ruas->toGeoJson()             // normal case: show polyline(s)
+        : ['type' => 'FeatureCollection', 'features' => []]; // fallback
+
+    /* ---------------------------------------------------------------
+       2.  Build the pin feature.
+           If 'point' column is NULL we fall back to dummy [0,0] so
+           the page never crashes. You can later edit the marker and
+           save real coordinates.
+    ----------------------------------------------------------------*/
+    if ($kerusakan->point) {
+        // normal case
+        $markerFeature = $kerusakan->toGeoJsonFeature();
+    } else {
+        // safety fallback
+        $markerFeature = [
+            'type'       => 'Feature',
+            'geometry'   => [
+                'type'        => 'Point',
+                'coordinates' => [0, 0],
+            ],
+            'properties' => [
+                'id'        => $kerusakan->id,
+                'ruas_code' => $kerusakan->ruas_code,
+                'nm_ruas'   => $ruas->nm_ruas ?? '',
+                'sta'       => $kerusakan->sta,
+                'image'     => $kerusakan->image_path
+                                ? asset('storage/'.$kerusakan->image_path)
+                                : null,
+                'warning'   => 'Koordinat belum diisi',
+            ],
+        ];
     }
+
+    /* ---------------------------------------------------------------
+       3.  Send everything to Inertia
+    ----------------------------------------------------------------*/
+    return Inertia::render('kerusakan/show', [
+        'marker' => $markerFeature,
+        'lines'  => $lines,
+        'info'   => [
+            'sta'       => $kerusakan->sta,
+            'nama_ruas' => $ruas->nm_ruas ?? '—',
+            'image'     => $kerusakan->image_path
+                ? asset('storage/'.$kerusakan->image_path)
+                : null,
+        ],
+    ]);
+}
+
 
     /* -----------------------------------------------------------------
        Edit form (stub)

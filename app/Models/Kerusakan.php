@@ -21,4 +21,23 @@ class Kerusakan extends Model
     {
         return $this->belongsTo(Ruas::class, 'ruas_code', 'code');
     }
+
+    public function toGeoJsonFeature(): array
+    {
+        return [
+            'type'       => 'Feature',
+            'geometry'   => [
+                'type'        => 'Point',
+                'coordinates' => [$this->point->getX(), $this->point->getY()],
+            ],
+            'properties' => [
+                'id'        => $this->id,
+                'ruas_code' => $this->ruas_code,
+                'nm_ruas'   => $this->ruas->nm_ruas ?? '',
+                'sta'       => $this->sta,
+                'image'     => $this->image_path ? asset('storage/'.$this->image_path) : null,
+            ],
+        ];
+    }
+
 }

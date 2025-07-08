@@ -8,7 +8,9 @@ import type { FeatureCollection } from 'geojson'
 const props = defineProps<{
   ruas: { code: string; nm_ruas: string }
   geojson: FeatureCollection
+  markersGeojson: FeatureCollection
 }>()
+
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Peta',        href: '/' },
