@@ -36,7 +36,7 @@ Route::resource('kerusakan', KerusakanController::class)
      ->except(['index','show']); // public can see
 
 Route::get ('/kerusakan',        [KerusakanController::class,'index'])->name('kerusakan.index');
-Route::get ('/kerusakan/{id}',   [KerusakanController::class,'show' ])->name('kerusakan.show');
+Route::get('/kerusakan/{kerusakan}', [KerusakanController::class,'show'])->name('kerusakan.show');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

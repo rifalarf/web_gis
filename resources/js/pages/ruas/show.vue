@@ -34,6 +34,7 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="relative min-h-[70vh] flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
         <LeafletMap
             :geojson="props.geojson"
+            :points-geojson="props.markersGeojson"
             :autoFit="true"
             :showLegend="true"
             :detailPopups="true"

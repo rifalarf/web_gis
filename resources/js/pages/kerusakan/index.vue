@@ -17,7 +17,6 @@ const props = defineProps<{
 
 const auth = usePage().props.auth
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Peta', href: '/' },
   { title: 'Titik Kerusakan', href: '/kerusakan' },
 ]
 
