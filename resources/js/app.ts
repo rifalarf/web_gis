@@ -7,6 +7,7 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
+import { Toaster } from 'vue-sonner'
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -23,6 +24,10 @@ createInertiaApp({
         color: '#4B5563',
     },
 });
+
+const toastDiv = document.createElement('div')
+document.body.appendChild(toastDiv)
+createApp(Toaster).mount(toastDiv)
 
 // This will set light / dark mode on page load...
 initializeTheme();

@@ -1,32 +1,37 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
-import { ref } from 'vue'
-import HeadingSmall from '@/components/HeadingSmall.vue'
-import { Button }   from '@/components/ui/button'
+import { ref }          from 'vue'
+import { useForm, router } from '@inertiajs/vue3'
+import { toast }        from 'vue-sonner'
+
 import {
-  Dialog, DialogClose, DialogContent,
-  DialogDescription, DialogFooter, DialogHeader,
-  DialogTitle, DialogTrigger
+  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter, DialogClose,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import InputError from '@/components/InputError.vue'
-import { router } from '@inertiajs/vue3'
+import { Button }       from '@/components/ui/button'
+import { Input }        from '@/components/ui/input'
+import InputError       from '@/components/InputError.vue'
+import HeadingSmall     from '@/components/HeadingSmall.vue'
+import { Label }        from '@/components/ui/label'
 
-const passwordInput = ref<HTMLInputElement|null>(null)
-
-const form = useForm({ password:'' })
+const dialogOpen     = ref(false)               // ← NEW
+const passwordInput  = ref<HTMLInputElement|null>(null)
+const form = useForm({ password: '' })
 
 function purgeAll (e:Event) {
   e.preventDefault()
   form.delete(route('ruas.purge'), {
-    preserveScroll:true,
-    onSuccess: () => router.visit('/'),
-    onError  : () => passwordInput.value?.focus(),
-    onFinish : () => form.reset(),
+    preserveScroll: true,
+    onSuccess: () => {
+      toast.success('Semua ruas dihapus')
+      dialogOpen.value = false           // close & release page
+      router.visit('/')
+    },
+    onFinish: () => form.reset(),
   })
 }
+
 function closeModal () {
+  dialogOpen.value = false               // always release page
   form.reset()
   form.clearErrors()
 }
@@ -36,19 +41,17 @@ function closeModal () {
   <div class="space-y-6">
     <HeadingSmall
       title="Hapus semua ruas"
-      description="Menghapus seluruh ruas dan segmen — tindakan ini permanen."
+      description="Menghapus seluruh ruas dan segmen — tindakan permanen."
     />
 
-    <div
-      class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4
-             dark:border-red-200/10 dark:bg-red-700/10"
-    >
+    <div class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4
+                dark:border-red-200/10 dark:bg-red-700/10">
       <div class="text-red-600 dark:text-red-100 space-y-0.5">
         <p class="font-medium">Warning</p>
-        <p class="text-sm">Proses tidak dapat dibatalkan.</p>
+        <p class="text-sm">Proses ini tidak dapat dibatalkan.</p>
       </div>
 
-      <Dialog>
+      <Dialog v-model:open="dialogOpen">
         <DialogTrigger as-child>
           <Button variant="destructive">Hapus semua ruas</Button>
         </DialogTrigger>
@@ -59,7 +62,7 @@ function closeModal () {
               <DialogTitle>Anda yakin?</DialogTitle>
               <DialogDescription>
                 Seluruh ruas dan data terkait akan terhapus permanen.
-                Masukkan password untuk konfirmasi.
+                Masukkan kata sandi untuk konfirmasi.
               </DialogDescription>
             </DialogHeader>
 

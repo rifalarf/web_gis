@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Ruas;
-use App\Models\Segment;
-use App\Models\Kerusakan;
+use App\Models\{Ruas, Segment, Kerusakan};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
@@ -121,28 +119,23 @@ class RuasController extends Controller
     }
 
     public function purge(Request $request)
-    {
-        /* 1. validate that a password is present */
-        $request->validate(['password' => ['required', 'string']]);
+{
+    // 1. require & verify password in ONE rule
+    $request->validate([
+        'password' => ['required', 'current_password'],
+    ]);
 
-        /* 2. verify it matches the logged-in user *//** @var string $hashed */    // help the analyser
-        $hashed = $request->user()->password;
-        if (! Hash::check($request->password, $hashed)) {
-            throw ValidationException::withMessages([
-                'password' => 'Password salah.',
-            ]);
-        }
+    // 2. wipe data (only reached when password is correct)
+    Ruas::truncate();
+    Segment::truncate();      // FK cascade? keep or remove
+    Kerusakan::truncate();    // optional
+    Cache::forget('segments_geojson');
+    Cache::forget('kerusakan_geojson');
 
-        /* 3. wipe data only when password correct */
-        Ruas::truncate();
-        Segment::truncate();
-        Kerusakan::truncate();   // if markers should vanish
-        Cache::forget('segments_geojson');
-        Cache::forget('kerusakan_geojson');
-
-        return redirect()
-            ->route('dashboard')
-            ->with('success', 'Semua ruas berhasil dihapus.');
+    // 3. redirect wherever you like
+    return redirect()
+        ->route('dashboard')
+        ->with('success', 'Semua ruas berhasil dihapus.');
     }
 
 }
