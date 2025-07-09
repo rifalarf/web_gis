@@ -3,8 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ruas;
+use App\Models\Segment;
+use App\Models\Kerusakan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Hash;   // add
+use Illuminate\Validation\ValidationException;
 
 class RuasController extends Controller
 {
@@ -60,7 +65,7 @@ class RuasController extends Controller
         ];
 
         /* ── gather markers that belong to this ruas ─────────────── */
-        $markerFeatures = \App\Models\Kerusakan::where('ruas_code', $code)
+        $markerFeatures = Kerusakan::where('ruas_code', $code)
             ->get()
             ->map->toGeoJsonFeature()
             ->all();
@@ -71,7 +76,7 @@ class RuasController extends Controller
         ];
 
         /* ── table rows (id, sta, lat, lon) ───────────────────── */
-        $markerRows = \App\Models\Kerusakan::where('ruas_code', $code)
+        $markerRows = Kerusakan::where('ruas_code', $code)
             ->orderBy('sta')
             ->get()
             ->map(fn ($k) => [
@@ -114,4 +119,30 @@ class RuasController extends Controller
     {
         //
     }
+
+    public function purge(Request $request)
+    {
+        /* 1. validate that a password is present */
+        $request->validate(['password' => ['required', 'string']]);
+
+        /* 2. verify it matches the logged-in user *//** @var string $hashed */    // help the analyser
+        $hashed = $request->user()->password;
+        if (! Hash::check($request->password, $hashed)) {
+            throw ValidationException::withMessages([
+                'password' => 'Password salah.',
+            ]);
+        }
+
+        /* 3. wipe data only when password correct */
+        Ruas::truncate();
+        Segment::truncate();
+        Kerusakan::truncate();   // if markers should vanish
+        Cache::forget('segments_geojson');
+        Cache::forget('kerusakan_geojson');
+
+        return redirect()
+            ->route('dashboard')
+            ->with('success', 'Semua ruas berhasil dihapus.');
+    }
+
 }
