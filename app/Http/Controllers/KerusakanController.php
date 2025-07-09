@@ -208,6 +208,7 @@ class KerusakanController extends Controller
     ----------------------------------------------------------------- */
     public function destroy(int $id)
     {
+        Cache::forget('kerusakan_geojson');
         $k = Kerusakan::findOrFail($id);
 
         /* remove file if exists */

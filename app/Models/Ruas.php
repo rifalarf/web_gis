@@ -11,7 +11,9 @@ class Ruas extends Model
     public    $incrementing = false;
     protected $keyType     = 'string';
 
-    protected $fillable = ['code','nm_ruas'];
+    protected $fillable = ['code','nm_ruas',
+    'kon_baik','kon_sdg','kon_rgn','kon_rusak',
+    'kon_mntp','kon_t_mntp','panjang','kecamatan',];
 
     public function segments()
     {

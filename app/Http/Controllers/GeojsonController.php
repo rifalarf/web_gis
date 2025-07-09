@@ -26,6 +26,7 @@ class GeojsonController extends Controller
 
             foreach ($groups as $code => $features) {
 
+                $first = $features->first()['properties'];
                 $ruasExists = Ruas::where('code', $code)->exists();
                 $mode       = $request->mode;           // insert | update
 
@@ -38,10 +39,22 @@ class GeojsonController extends Controller
 
                 // 3) create ruas row when needed
                 if (! $ruasExists) {
-                    Ruas::create([
-                        'code'    => $code,
-                        'nm_ruas' => $features->first()['properties']['Nm_Ruas'] ?? 'Tanpa Nama',
-                    ]);
+                    $ruas = Ruas::firstOrCreate(
+                        ['code' => $code],
+                        ['nm_ruas' => $first['Nm_Ruas'] ?? 'Tanpa Nama']
+                    );
+                    $ruas->fill([
+                        'kon_baik'     => $first['Kon_Baik'],
+                        'kon_sdg'      => $first['Kon_Sdg'],
+                        'kon_rgn'      => $first['Kon_Rgn'],
+                        'kon_rusak'    => $first['Kon_Rusak'],
+                        'kon_mntp'     => $first['Kon_Mntp']    ?? ($first['Kon_Baik'] + $first['Kon_Sdg']),
+                        'kon_t_mntp'   => $first['Kon_T_Mntp']  ?? ($first['Kon_Rgn']  + $first['Kon_Rusak']),
+                        'panjang'      => $first['Panjang'],
+                        'kecamatan'    => $first['Kecamatan'],
+                    ])->save();
+
+
                 }
 
                 // 4) update mode wipes old segments

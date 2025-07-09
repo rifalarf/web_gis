@@ -41,6 +41,10 @@ Route::get('/kerusakan/{kerusakan}', [KerusakanController::class,'show'])->name(
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 
+Route::get('/statistik', [App\Http\Controllers\StatistikController::class,'index'])
+    ->name('statistik.index');
+
+
 /*
 Route::get('/names', [NameController::class, 'index'])->name('names.index');
 Route::get('/names/{name}', [NameController::class, 'show'])->name('names.show');
