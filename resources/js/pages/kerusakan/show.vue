@@ -45,6 +45,7 @@ const pinGJ: FeatureCollection = {
           :points-geojson="pinGJ"
           :followPoints="true"
           :showLegend="false"
+          :detailPopups="true"
         />
       </div>
 

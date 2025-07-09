@@ -9,6 +9,7 @@ const props = defineProps<{
   ruas: { code: string; nm_ruas: string }
   geojson: FeatureCollection
   markersGeojson: FeatureCollection
+  markerRows: { id: number; sta: string; lat: number; lon: number }[]
 }>()
 
 
@@ -40,8 +41,42 @@ const breadcrumbs: BreadcrumbItem[] = [
             :detailPopups="true"
             class="absolute inset-0 rounded-b-xl"
         />
-
       </div>
+      <div class="rounded-xl border border-sidebar-border/70 p-4
+            dark:border-sidebar-border overflow-x-auto">
+        <h3 class="mb-3 text-sm font-semibold">Daftar Titik Kerusakan</h3>
+
+        <table class="min-w-full text-xs">
+            <thead>
+            <tr class="border-b dark:border-gray-600">
+                <th class="py-2 text-left w-12">No</th>
+                <th class="py-2 text-left">STA</th>
+                <th class="py-2 text-left">Koordinat</th>
+                <th class="py-2 text-left w-20">Aksi</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="(row, idx) in props.markerRows" :key="row.id"
+                class="border-b hover:bg-gray-50 dark:hover:bg-gray-800
+                        dark:border-gray-600">
+                <td class="py-2">{{ idx + 1 }}</td>
+                <td class="py-2">{{ row.sta }}</td>
+                <td class="py-2">{{ row.lat.toFixed(6) }}, {{ row.lon.toFixed(6) }}</td>
+                <td class="py-2">
+                <a
+                    :href="`/kerusakan/${row.id}`"
+                    class="text-blue-600 underline"
+                >Detail</a>
+                </td>
+            </tr>
+            <tr v-if="props.markerRows.length === 0">
+                <td colspan="4" class="py-4 text-center text-gray-500">
+                Tidak ada titik kerusakan pada ruas ini.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        </div>
     </div>
   </AppLayout>
 </template>

@@ -70,11 +70,24 @@ class RuasController extends Controller
             'features' => $markerFeatures,
         ];
 
+        /* ── table rows (id, sta, lat, lon) ───────────────────── */
+        $markerRows = \App\Models\Kerusakan::where('ruas_code', $code)
+            ->orderBy('sta')
+            ->get()
+            ->map(fn ($k) => [
+                'id'  => $k->id,
+                'sta' => $k->sta ?? '—',
+                'lat' => $k->point->getY(),
+                'lon' => $k->point->getX(),
+            ]);
+
+
         /* ── inertia view ─────────────────────────────────────────── */
         return Inertia::render('ruas/show', [
             'ruas'            => $ruas->only('code', 'nm_ruas'),
             'geojson'         => $geojson,
-            'markersGeojson'  => $markersGeojson,   // ← NEW PROP
+            'markersGeojson'  => $markersGeojson,
+            'markerRows'      => $markerRows,    // ← NEW PROP
         ]);
     }
 
