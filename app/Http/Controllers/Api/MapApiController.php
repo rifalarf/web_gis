@@ -33,6 +33,8 @@ class MapApiController extends Controller
                             'sta'         => $s->sta,
                             'jens_perm'   => $s->jens_perm,
                             'kondisi'     => $s->kondisi,
+                            'kecamatan'   => $s->ruas->kecamatan ?? null,
+                            'panjang'     => (float) ($s->ruas->panjang ?? 0),
                             // front-end can read this directly
                             'stroke'      => $colourMap[$s->kondisi] ?? '#9ca3af', // grey when null
                             'stroke-width'=> 3,

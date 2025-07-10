@@ -87,7 +87,7 @@ class RuasController extends Controller
 
         /* ── inertia view ─────────────────────────────────────────── */
         return Inertia::render('ruas/show', [
-            'ruas'            => $ruas->only('code', 'nm_ruas'),
+            'ruas'            => $ruas->only('code', 'nm_ruas','kecamatan','panjang'),
             'geojson'         => $geojson,
             'markersGeojson'  => $markersGeojson,
             'markerRows'      => $markerRows,    // ← NEW PROP

@@ -43,9 +43,12 @@ const rulerPath = 'M4 3H20V5H4V3ZM4 7H20V9H4V7ZM4 11H20V13H4V11ZM4 15H20V17H4V15
       />
       <StatCard
         :icon="rulerPath"
-        label="Total Panjang (km)"
-        :value="Number(props.totals.panjang ?? 0).toFixed(2)"
-      />
+        label="Total Panjang"
+        :value="`${Number(props.totals.panjang ?? 0)
+                    .toFixed(2)             // 7.10
+                    .replace(/\\.00$/, '')  // 7.1 → 7
+                    } km`"
+        />
 
       <!-- pie cards -->
       <PieCard

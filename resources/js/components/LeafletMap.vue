@@ -100,6 +100,8 @@ const lineLayer = L.geoJSON(undefined, {
         `<div class="space-y-1 text-sm">
            <div><strong>CODE:</strong> ${code}</div>
            <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
+           <div><strong>Panjang:</strong> ${Number(p.panjang ?? 0).toFixed(2)} km</div>
+           <div><strong>Kecamatan:</strong> ${p.kecamatan ?? '−'}</div>
            <a href="/ruas-jalan/${code}" class="text-blue-600 underline">Detail</a>
          </div>`
 
