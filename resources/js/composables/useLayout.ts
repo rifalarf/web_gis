@@ -1,9 +1,9 @@
 import { ref, onMounted } from 'vue'
 
-export type AppLayoutKind = 'headbar' | 'sidebar'
+export type AppLayoutKind = 'header' | 'sidebar'
 
 const key = 'layout'            // localStorage / cookie key
-const layout = ref<AppLayoutKind>('headbar')  // default
+const layout = ref<AppLayoutKind>('header')  // default
 
 /* ─── helper ─────────────────────────────────────────── */
 function persist (value: AppLayoutKind) {
@@ -15,7 +15,7 @@ function persist (value: AppLayoutKind) {
 /* ─── init once on the client ────────────────────────── */
 onMounted(() => {
   const saved = localStorage.getItem(key) as AppLayoutKind | null
-  if (saved === 'sidebar' || saved === 'headbar') layout.value = saved
+  if (saved === 'sidebar' || saved === 'header') layout.value = saved
 })
 
 /* ─── exposed API ────────────────────────────────────── */

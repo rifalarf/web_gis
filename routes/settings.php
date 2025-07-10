@@ -25,3 +25,6 @@ Route::get('settings/appearance', function () {
     return Inertia::render('settings/Appearance');
 })->name('appearance');
 
+Route::get('settings/layout', function () {
+    return Inertia::render('settings/layout');
+})->name('layout');

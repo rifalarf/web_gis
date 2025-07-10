@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/app/AppHeaderLayout.vue';
+import { computed, h } from 'vue'
+import { useLayout } from '@/composables/useLayout'
+
+import AppHeaderLayout from '@/layouts/app/AppHeaderLayout.vue';
+import AppSidebarLayout  from '@/layouts/app/AppSidebarLayout.vue'
+
 import type { BreadcrumbItemType } from '@/types';
 
 interface Props {
@@ -9,10 +14,17 @@ interface Props {
 withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
 });
+
+const { layout } = useLayout()
+
+/* pick the component reactively */
+const ActiveLayout = computed(() =>
+  layout.value === 'sidebar' ? AppSidebarLayout : AppHeaderLayout
+)
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <slot />
-    </AppLayout>
+  <component :is="ActiveLayout" :breadcrumbs="breadcrumbs">
+    <slot />
+  </component>
 </template>
