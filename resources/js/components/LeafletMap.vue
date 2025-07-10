@@ -5,6 +5,16 @@ import type { FeatureCollection, Feature } from 'geojson'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import 'leaflet.markercluster'        // adds L.MarkerClusterGroup
+import 'leaflet-gps/dist/leaflet-gps.min.css';
+import 'leaflet-gps';                 // adds L.Control.Gps to the runtime
+import 'leaflet.browser.print/dist/leaflet.browser.print.js'
+import 'leaflet-search/dist/leaflet-search.min.css'
+import 'leaflet-search'
+import 'leaflet.fullscreen/Control.FullScreen.css'
+import 'leaflet.fullscreen'
+import 'leaflet-easybutton/src/easy-button.css'
+import 'leaflet-easybutton'
+
 
 /* ── props ─────────────────────────────────────────────── */
 const props = defineProps<{
@@ -32,230 +42,264 @@ const mapEl = ref<HTMLElement | null>(null)
 
 /* ── init once mounted ─────────────────────────────────── */
 onMounted(() => {
-  /* 1. Map & basemap layers */
-  const osm  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap',
-    maxZoom: 19,
-  })
-  const esri = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    {
-      attribution:
-        'Tiles &copy; Esri — Source: Esri, DeLorme, NAVTEQ, USGS, etc.',
+    /* 1. Map & basemap layers */
+    const osm  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 19,
+    })
+    const esri = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        {
+        attribution:
+            'Tiles &copy; Esri — Source: Esri, DeLorme, NAVTEQ, USGS, etc.',
+        },
+    )
+
+    const map = L.map(mapEl.value!, { layers: [osm], zoomControl: false }).setView([-7.3, 107.91], 10)
+
+
+    L.control.zoom({
+    position: 'bottomright' // topleft, topright, bottomleft, bottomright
+    }).addTo(map);
+
+    const cluster = L.markerClusterGroup({
+    showCoverageOnHover: false,
+    spiderfyOnMaxZoom:   true,
+    })
+    map.addLayer(cluster)
+
+    /* 2. Basemap switcher (top-right) */
+    L.control.layers(
+        { OpenStreetMap: osm, Esri: esri },
+        {},
+        { position: 'topright', collapsed: false },
+    ).addTo(map)
+
+
+    /* 3. GeoJSON layer with style + pop-ups */
+    /* ───────── highlight state ───────── */
+    let selectedGroup: string | null = null            // ruas CODE or segment-id
+
+    /* group layers differently for the 2 modes */
+    const groupLayers: Record<string, L.Path[]> = {}   // key ⇒ array of paths
+
+    /* helper – make a unique id per segment */
+    function segId(f: Feature) {
+    // geometry index + STA is usually unique; fall back to stable string
+    return `${(f.properties as any).sta}-${L.stamp(f)}`;
+    }
+
+    /* ───────── geojson layer ─────────── */
+    const lineLayer = L.geoJSON(undefined, {
+    style: (feat?: Feature) => {
+        const k = (feat?.properties as any)?.kondisi as KondisiKey | undefined
+        return { color: colour[k ?? 'default'], weight: 3, lineCap: 'round' }
     },
-  )
 
-  const map = L.map(mapEl.value!, { layers: [osm] }).setView([-7.3, 107.91], 10)
+    onEachFeature: (feat?: Feature, layer?: L.Layer) => {
+        if (!feat || !layer) return
+        const p    = feat.properties as any
+        const code = p.code as string
+        const key  = props.detailPopups ? segId(feat) : code   // group key
 
-  const cluster = L.markerClusterGroup({
-  showCoverageOnHover: false,
-  spiderfyOnMaxZoom:   true,
-})
-map.addLayer(cluster)
+        /* === build group map === */
+        if (!groupLayers[key]) groupLayers[key] = []
+        groupLayers[key].push(layer as L.Path)
 
+        /* === popup content === */
+        const html = props.formMode
+    ? `<div class="space-y-1 text-sm">
+        <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
+        <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
+        </div>`
+    : props.detailPopups
+        ? /* existing segment-detail popup */
+            `<div class="space-y-1 text-sm">
+            <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
+            <div><strong>Jenis Permukaan:</strong> ${p.jens_perm ?? '−'}</div>
+            <div><strong>Kondisi:</strong> ${p.kondisi ?? '−'}</div>
+            </div>`
+        : /* dashboard popup */
+            `<div class="space-y-1 text-sm">
+            <div><strong>CODE:</strong> ${code}</div>
+            <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
+            <div><strong>Panjang:</strong> ${Number(p.panjang ?? 0).toFixed(2)} km</div>
+            <div><strong>Kecamatan:</strong> ${p.kecamatan ?? '−'}</div>
+            <a href="/ruas-jalan/${code}" class="text-blue-600 underline">Detail</a>
+            </div>`
 
+        layer.bindPopup(html)
 
-  /* 2. Basemap switcher (top-right) */
-  L.control.layers(
-    { OpenStreetMap: osm, Esri: esri },
-    {},
-    { position: 'topright', collapsed: false },
-  ).addTo(map)
+        /* === hover highlight === */
+        layer.on('mouseover', () => toggleHighlight(key, true))
+        layer.on('mouseout',  () => {
+        if (selectedGroup !== key) toggleHighlight(key, false)
+        })
 
+        /* === click to lock highlight === */
+        layer.on('click', () => {
+        if (selectedGroup && selectedGroup !== key) toggleHighlight(selectedGroup, false)
+        selectedGroup = key
+        toggleHighlight(key, true)
+        })
 
-  /* 3. GeoJSON layer with style + pop-ups */
-  /* ───────── highlight state ───────── */
-let selectedGroup: string | null = null            // ruas CODE or segment-id
-
-/* group layers differently for the 2 modes */
-const groupLayers: Record<string, L.Path[]> = {}   // key ⇒ array of paths
-
-/* helper – make a unique id per segment */
-function segId(f: Feature) {
-  // geometry index + STA is usually unique; fall back to stable string
-  return `${(f.properties as any).sta}-${L.stamp(f)}`;
-}
-
-/* ───────── geojson layer ─────────── */
-const lineLayer = L.geoJSON(undefined, {
-  style: (feat?: Feature) => {
-    const k = (feat?.properties as any)?.kondisi as KondisiKey | undefined
-    return { color: colour[k ?? 'default'], weight: 3, lineCap: 'round' }
-  },
-
-  onEachFeature: (feat?: Feature, layer?: L.Layer) => {
-    if (!feat || !layer) return
-    const p    = feat.properties as any
-    const code = p.code as string
-    const key  = props.detailPopups ? segId(feat) : code   // group key
-
-    /* === build group map === */
-    if (!groupLayers[key]) groupLayers[key] = []
-    groupLayers[key].push(layer as L.Path)
-
-    /* === popup content === */
-    const html = props.formMode
-  ? `<div class="space-y-1 text-sm">
-       <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
-       <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
-     </div>`
-  : props.detailPopups
-      ? /* existing segment-detail popup */
-        `<div class="space-y-1 text-sm">
-           <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
-           <div><strong>Jenis Permukaan:</strong> ${p.jens_perm ?? '−'}</div>
-           <div><strong>Kondisi:</strong> ${p.kondisi ?? '−'}</div>
-         </div>`
-      : /* dashboard popup */
-        `<div class="space-y-1 text-sm">
-           <div><strong>CODE:</strong> ${code}</div>
-           <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
-           <div><strong>Panjang:</strong> ${Number(p.panjang ?? 0).toFixed(2)} km</div>
-           <div><strong>Kecamatan:</strong> ${p.kecamatan ?? '−'}</div>
-           <a href="/ruas-jalan/${code}" class="text-blue-600 underline">Detail</a>
-         </div>`
-
-    layer.bindPopup(html)
-
-    /* === hover highlight === */
-    layer.on('mouseover', () => toggleHighlight(key, true))
-    layer.on('mouseout',  () => {
-      if (selectedGroup !== key) toggleHighlight(key, false)
-    })
-
-    /* === click to lock highlight === */
-    layer.on('click', () => {
-      if (selectedGroup && selectedGroup !== key) toggleHighlight(selectedGroup, false)
-      selectedGroup = key
-      toggleHighlight(key, true)
-    })
-
-    /* clear highlight when popup closed */
-    layer.on('popupclose', () => {
-      toggleHighlight(key, false)
-      selectedGroup = null
-    })
-  },
-}).addTo(map)
-
-
-const pointLayer = L.geoJSON(undefined, {
-  pointToLayer: (feat, latlng) => {
-    const street = `https://www.google.com/maps?q=&layer=c&cbll=${latlng.lat},${latlng.lng}`
-    const marker = L.marker(latlng)
-    marker.bindPopup(buildDamagePopup(feat, latlng, street))
-    return marker
-  },
-})
-cluster.addLayer(pointLayer)
-
-function buildDamagePopup(feat: Feature, ll: L.LatLng, streetUrl: string) {
-  const p = feat.properties as any
-  const lat = ll.lat.toFixed(6)
-  const lon = ll.lng.toFixed(6)
-  return `
-    <div class="space-y-1 text-sm">
-      ${p.image ? `<img src="${p.image}" class="mb-2 max-h-32 rounded">` : ''}
-      <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
-      <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
-      <div><strong>Koordinat:</strong> ${lat}, ${lon}</div>
-      <a href="/kerusakan/${p.id}" class="text-blue-600 underline">Detail</a><br>
-      <a href="${streetUrl}" target="_blank" class="text-green-600 underline">Street View</a>
-    </div>
-  `
-}
-
-/* click on empty map area clears selection */
-map.on('click', (e) => {
-  if ((e as any).originalEvent.target.tagName === 'CANVAS') { // tile background
-    if (selectedGroup) toggleHighlight(selectedGroup, false)
-    selectedGroup = null
-  }
-})
-
-/* ───────── helper: style on/off ───────── */
-function toggleHighlight(key: string, on: boolean) {
-  (groupLayers[key] || []).forEach((l) =>
-    l.setStyle({
-      weight: on ? 6 : 3,
-      dashArray: on ? '0' : undefined,   // ← here
-    }).bringToFront(),
-  )
-}
-
-
-
-
-  /* 4. Reactive load / refresh */
-  watch(
-    () => props.geojson,
-    (data) => {
-      if (!data) return
-      lineLayer.clearLayers().addData(data as any)
-
-      if (props.autoFit && lineLayer.getBounds().isValid()) {
-        map.fitBounds(lineLayer.getBounds(), { padding: [20, 20] })
-      }
+        /* clear highlight when popup closed */
+        layer.on('popupclose', () => {
+        toggleHighlight(key, false)
+        selectedGroup = null
+        })
     },
-    { immediate: true },
-  )
+    }).addTo(map)
 
-  watch(
-  () => props.pointsGeojson,
-  (data) => {
-    if (!data) return
-     cluster.clearLayers()
-    const gj = L.geoJSON(data as any, {
-      pointToLayer: (feat, latlng) => {
+
+    const pointLayer = L.geoJSON(undefined, {
+    pointToLayer: (feat, latlng) => {
         const street = `https://www.google.com/maps?q=&layer=c&cbll=${latlng.lat},${latlng.lng}`
-        const marker = L.marker(latlng)            // ← default Leaflet pin
+        const marker = L.marker(latlng)
         marker.bindPopup(buildDamagePopup(feat, latlng, street))
         return marker
-      },
+    },
     })
-    cluster.addLayer(gj)                            // hand it to cluster
+    cluster.addLayer(pointLayer)
 
-    if (props.followPoints &&
-        data.features?.length === 1 &&
-        data.features[0].geometry.type === 'Point') {
-      const [lon, lat] = (data.features[0].geometry as any).coordinates
-      map.setView([lat, lon], map.getZoom() < 14 ? 14 : map.getZoom())
+    function buildDamagePopup(feat: Feature, ll: L.LatLng, streetUrl: string) {
+    const p = feat.properties as any
+    const lat = ll.lat.toFixed(6)
+    const lon = ll.lng.toFixed(6)
+    return `
+        <div class="space-y-1 text-sm">
+        ${p.image ? `<img src="${p.image}" class="mb-2 max-h-32 rounded">` : ''}
+        <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
+        <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
+        <div><strong>Koordinat:</strong> ${lat}, ${lon}</div>
+        <a href="/kerusakan/${p.id}" class="text-blue-600 underline">Detail</a><br>
+        <a href="${streetUrl}" target="_blank" class="text-green-600 underline">Street View</a>
+        </div>
+    `
     }
-    },
-    { immediate: true },
-  )
 
+    /* click on empty map area clears selection */
+    map.on('click', (e) => {
+    if ((e as any).originalEvent.target.tagName === 'CANVAS') { // tile background
+        if (selectedGroup) toggleHighlight(selectedGroup, false)
+        selectedGroup = null
+    }
+    })
 
-
-/* 5. Legend control (bottom-left) */
-if (props.showLegend) {
-  /* ── build the inner HTML FIRST ── */
-  const legendHtml = Object.entries(colour)
-    .filter(([k]) => k !== 'default')
-    .map(
-      ([k, c]) => `
-        <div class="flex items-center gap-2 mb-1 last:mb-0">
-          <span style="background:${c};width:24px;height:10px;border-radius:2px;display:inline-block"></span>
-          ${k.replace('_', ' ').replace(/\b\\w/g, (l) => l.toUpperCase())}
-        </div>`,
+    /* ───────── helper: style on/off ───────── */
+    function toggleHighlight(key: string, on: boolean) {
+    (groupLayers[key] || []).forEach((l) =>
+        l.setStyle({
+        weight: on ? 6 : 3,
+        dashArray: on ? '0' : undefined,   // ← here
+        }).bringToFront(),
     )
-    .join('')
+    }
 
-  /* ── extend L.Control AFTER legendHtml exists ── */
-  const Legend = L.Control.extend({
-    options: { position: 'bottomleft' },
-    onAdd() {
-      const div = L.DomUtil.create(
-        'div',
-        'rounded-lg bg-white/80 p-2 text-xs shadow backdrop-blur dark:bg-gray-800/80',
-      )
-      div.innerHTML = legendHtml
-      return div
-    },
-  })
 
-  new Legend().addTo(map)
-}
+
+
+    /* 4. Reactive load / refresh */
+    watch(
+        () => props.geojson,
+        (data) => {
+        if (!data) return
+        lineLayer.clearLayers().addData(data as any)
+
+        if (props.autoFit && lineLayer.getBounds().isValid()) {
+            map.fitBounds(lineLayer.getBounds(), { padding: [20, 20] })
+        }
+        },
+        { immediate: true },
+    )
+
+    watch(
+    () => props.pointsGeojson,
+    (data) => {
+        if (!data) return
+        cluster.clearLayers()
+        const gj = L.geoJSON(data as any, {
+        pointToLayer: (feat, latlng) => {
+            const street = `https://www.google.com/maps?q=&layer=c&cbll=${latlng.lat},${latlng.lng}`
+            const marker = L.marker(latlng)            // ← default Leaflet pin
+            marker.bindPopup(buildDamagePopup(feat, latlng, street))
+            return marker
+        },
+        })
+        cluster.addLayer(gj)                            // hand it to cluster
+
+        if (props.followPoints &&
+            data.features?.length === 1 &&
+            data.features[0].geometry.type === 'Point') {
+        const [lon, lat] = (data.features[0].geometry as any).coordinates
+        map.setView([lat, lon], map.getZoom() < 14 ? 14 : map.getZoom())
+        }
+        },
+        { immediate: true },
+    )
+
+
+
+    /* 5. Legend control (bottom-left) */
+    if (props.showLegend) {
+    /* ── build the inner HTML FIRST ── */
+    const legendHtml = Object.entries(colour)
+        .filter(([k]) => k !== 'default')
+        .map(
+        ([k, c]) => `
+            <div class="flex items-center gap-2 mb-1 last:mb-0">
+            <span style="background:${c};width:24px;height:10px;border-radius:2px;display:inline-block"></span>
+            ${k.replace('_', ' ').replace(/\b\\w/g, (l) => l.toUpperCase())}
+            </div>`,
+        )
+        .join('')
+
+    /* ── extend L.Control AFTER legendHtml exists ── */
+    const Legend = L.Control.extend({
+        options: { position: 'bottomleft' },
+        onAdd() {
+        const div = L.DomUtil.create(
+            'div',
+            'rounded-lg bg-white/80 p-2 text-xs shadow backdrop-blur dark:bg-gray-800/80',
+        )
+        div.innerHTML = legendHtml
+        return div
+        },
+    })
+
+    new Legend().addTo(map)
+    }
+
+        // Search
+    const search = new (L.control as any).search({
+        layer        : lineLayer,
+        propertyName : 'nm_ruas',
+        marker       : false,
+        position     : 'topleft',
+        textPlaceholder: 'Cari Jalan…'
+    }).addTo(map)
+
+    const Gps = new (L as any).Control.Gps({
+        position: 'topleft',
+        autoCenter: true,
+        accuracy: true,
+    }).addTo(map)
+
+    L.control.browserPrint({
+        position : 'bottomleft',
+    }).addTo(map)
+
+    // Full-screen
+    const assTo = new (L.control as any).fullscreen({ position: 'bottomleft' }).addTo(map)
+
+    const easyButton = new (L as any).easyButton({
+    states: [{
+        icon      : 'fa',
+        onClick   : () => map.setView([-7.3, 107.91], 10)
+    }],
+    position : 'bottomleft'
+    }).addTo(map)
+
 
 
 })
@@ -276,4 +320,17 @@ if (props.showLegend) {
   width: 100%;
   z-index: 0;
 }
+
+::v-deep .leaflet-control-gps {
+  width: 34px;
+  height: 34px;
+  z-index: 0;
+}
+
+::v-deep .leaflet-control-gps .gps-button {
+  width: 30px;
+  height: 30px;
+
+}
+
 </style>
