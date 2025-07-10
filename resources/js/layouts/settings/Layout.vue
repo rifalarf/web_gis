@@ -4,21 +4,45 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue'
 
-const sidebarNavItems: NavItem[] = [
+const auth = computed(() => usePage().props.auth)
+
+const sidebarNavItems = computed(() => {
+  const items = [
+    {
+        title:'Appearance',
+        href:'/settings/appearance'
+    },   // always visible
+    {
+        title:'Layout',
+        href:'/settings/layout'
+    },
+  ]
+    if (auth.value.user) {
+    items.unshift({
+        title:'Profile',
+        href:'/settings/profile'
+    })
+    }
+  return items
+})
+
+
+/* const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
         href: '/settings/profile',
     },
-/*     {
+    {
         title: 'Password',
         href: '/settings/password',
-    }, */
+    },
     {
         title: 'Appearance',
         href: '/settings/appearance',
     },
-];
+]; */
 
 const page = usePage();
 

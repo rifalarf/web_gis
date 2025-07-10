@@ -12,7 +12,7 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search, Map, Route, MapPinX, ChartPie } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Menu, Search, Map, Route, MapPinX, ChartPie, Settings } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -57,14 +57,10 @@ const mainNavItems: NavItem[] = [
 
 const rightNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
+        title: 'Settings',
+        href: '/settings/appearance',
+        icon: Settings,
+        show: 'guest',
     },
 ];
 </script>
@@ -100,17 +96,19 @@ const rightNavItems: NavItem[] = [
                                     </Link>
                                 </nav>
                                 <div class="flex flex-col space-y-4">
-                                    <a
-                                        v-for="item in rightNavItems"
+                                    <Link
+                                        v-for="item in rightNavItems.filter(i =>
+                                            i.show === 'all' ||
+                                            (i.show === 'guest' && !auth.user) ||
+                                            (i.show === 'auth'  &&  auth.user)
+                                        )"
                                         :key="item.title"
                                         :href="item.href"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
                                         class="flex items-center space-x-2 text-sm font-medium"
                                     >
                                         <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
                                         <span>{{ item.title }}</span>
-                                    </a>
+                                </Link>
                                 </div>
                             </div>
                         </SheetContent>
@@ -144,20 +142,24 @@ const rightNavItems: NavItem[] = [
 
                 <div class="ml-auto flex items-center space-x-2">
                     <div class="relative flex items-center space-x-1">
-                        <Button variant="ghost" size="icon" class="group h-9 w-9 cursor-pointer">
+                        <!-- <Button variant="ghost" size="icon" class="group h-9 w-9 cursor-pointer">
                             <Search class="size-5 opacity-80 group-hover:opacity-100" />
-                        </Button>
+                        </Button> -->
 
                         <div class="hidden space-x-1 lg:flex">
-                            <template v-for="item in rightNavItems" :key="item.title">
+                            <template v-for="item in rightNavItems.filter(i =>
+                                        i.show === 'all' ||
+                                        (i.show === 'guest' && !auth.user) ||
+                                        (i.show === 'auth'  &&  auth.user)
+                                        )" :key="item.title">
                                 <TooltipProvider :delay-duration="0">
                                     <Tooltip>
                                         <TooltipTrigger>
                                             <Button variant="ghost" size="icon" as-child class="group h-9 w-9 cursor-pointer">
-                                                <a :href="item.href" target="_blank" rel="noopener noreferrer">
+                                                <Link :href="item.href">
                                                     <span class="sr-only">{{ item.title }}</span>
                                                     <component :is="item.icon" class="size-5 opacity-80 group-hover:opacity-100" />
-                                                </a>
+                                                </Link>
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
