@@ -2,6 +2,9 @@
 import { onMounted, ref, watch } from 'vue'
 import * as L from 'leaflet'
 import type { FeatureCollection, Feature } from 'geojson'
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
+import 'leaflet.markercluster'        // adds L.MarkerClusterGroup
 
 /* ── props ─────────────────────────────────────────────── */
 const props = defineProps<{
@@ -43,6 +46,13 @@ onMounted(() => {
   )
 
   const map = L.map(mapEl.value!, { layers: [osm] }).setView([-7.3, 107.91], 10)
+
+  const cluster = L.markerClusterGroup({
+  showCoverageOnHover: false,
+  spiderfyOnMaxZoom:   true,
+})
+map.addLayer(cluster)
+
 
 
   /* 2. Basemap switcher (top-right) */
@@ -128,21 +138,16 @@ const lineLayer = L.geoJSON(undefined, {
   },
 }).addTo(map)
 
-// red pin icon
-const pin = L.icon({
-  iconUrl: '/images/map-pin.svg',     // add any PNG/SVG to /public/images
-  iconSize:  [22, 34],
-  iconAnchor:[11, 34],
-})
 
 const pointLayer = L.geoJSON(undefined, {
   pointToLayer: (feat, latlng) => {
     const street = `https://www.google.com/maps?q=&layer=c&cbll=${latlng.lat},${latlng.lng}`
-    const marker = L.marker(latlng, { icon: pin })
+    const marker = L.marker(latlng)
     marker.bindPopup(buildDamagePopup(feat, latlng, street))
     return marker
   },
-}).addTo(map)
+})
+cluster.addLayer(pointLayer)
 
 function buildDamagePopup(feat: Feature, ll: L.LatLng, streetUrl: string) {
   const p = feat.properties as any
@@ -199,7 +204,16 @@ function toggleHighlight(key: string, on: boolean) {
   () => props.pointsGeojson,
   (data) => {
     if (!data) return
-    pointLayer.clearLayers().addData(data as any)
+     cluster.clearLayers()
+    const gj = L.geoJSON(data as any, {
+      pointToLayer: (feat, latlng) => {
+        const street = `https://www.google.com/maps?q=&layer=c&cbll=${latlng.lat},${latlng.lng}`
+        const marker = L.marker(latlng)            // ← default Leaflet pin
+        marker.bindPopup(buildDamagePopup(feat, latlng, street))
+        return marker
+      },
+    })
+    cluster.addLayer(gj)                            // hand it to cluster
 
     if (props.followPoints &&
         data.features?.length === 1 &&

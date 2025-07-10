@@ -32,11 +32,11 @@ function destroy(id: number) {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
       <!-- top placeholder cards stay for visual parity -->
-      <div class="grid auto-rows-min gap-4 md:grid-cols-3">
+      <div class="grid auto-rows-min gap-4 md:grid-cols-2">
         <div
-          v-for="n in 3"
+          v-for="n in 2"
           :key="n"
-          class="relative aspect-video overflow-hidden rounded-xl border
+          class="relative h-24 overflow-hidden rounded-xl border
                  border-sidebar-border/70 dark:border-sidebar-border"
         >
           <PlaceholderPattern />
