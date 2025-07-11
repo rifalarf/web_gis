@@ -24,7 +24,7 @@ const mntpData   = [props.totals.mntp, props.totals.t_mntp]
 const mntpColors = ['#22c55e','#ef4444']
 
 /* icons (simple paths) ----------------------------------------- */
-const mapPath   = 'M9 2L15 4V22L9 20L3 22V4L9 2Z'
+const mapPath   = 'M4 3H20V5H4V3ZM4 7H20V9H4V7ZM4 11H20V13H4V11ZM4 15H20V17H4V15ZM4 19H20V21H4V19Z'
 const rulerPath = 'M4 3H20V5H4V3ZM4 7H20V9H4V7ZM4 11H20V13H4V11ZM4 15H20V17H4V15ZM4 19H20V21H4V19Z'
 </script>
 

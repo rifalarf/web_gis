@@ -35,39 +35,44 @@ const pinGJ: FeatureCollection = {
   <Head title="Detail Kerusakan" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex h-full flex-col gap-4 rounded-xl p-4 lg:flex-row">
+    <div class="py-12">
+      <div class="max-w-7xl mx-auto sm:px-6 lg:px-4 flex flex-col gap-4 lg:flex-row">
 
-      <!-- MAP PANEL -->
-      <div class="relative h-[60vh] flex-1 rounded-xl border
-                  dark:border-sidebar-border lg:h-auto">
-        <LeafletMap
-          :geojson="props.lines"
-          :points-geojson="pinGJ"
-          :followPoints="true"
-          :showLegend="false"
-          :detailPopups="true"
-        />
-      </div>
-
-      <!-- INFO CARD -->
-      <div class="w-full max-w-sm rounded-xl border p-6
-                  dark:border-sidebar-border lg:w-80">
-        <div class="space-y-3 text-sm">
-          <div><strong>Nama Ruas:</strong> {{ props.info.nama_ruas }}</div>
-          <div><strong>STA:</strong> {{ props.info.sta ?? '−' }}</div>
-          <a
-            :href="`/ruas-jalan/${prop.ruas_code ?? ''}`"
-            class="text-blue-600 underline"
-          >Lihat Ruas</a>
-
-          <img
-            v-if="props.info.image"
-            :src="props.info.image"
-            class="mt-3 rounded max-h-60"
-          />
+        <!-- MAP PANEL -->
+        <div class="w-full lg:w-3/4">
+          <div class="relative h-[300px] sm:h-[400px] lg:h-[600px] w-full rounded-xl border dark:border-sidebar-border">
+            <LeafletMap
+              :geojson="props.lines"
+              :points-geojson="pinGJ"
+              :followPoints="true"
+              :showLegend="false"
+              :detailPopups="true"
+            />
+          </div>
         </div>
-      </div>
 
+        <!-- INFO CARD -->
+        <div class="w-full lg:w-1/4">
+          <div class="rounded-xl border p-6 dark:border-sidebar-border">
+            <div class="space-y-3 text-sm">
+              <div><strong>Nama Ruas:</strong> {{ props.info.nama_ruas }}</div>
+              <div><strong>STA:</strong> {{ props.info.sta ?? '−' }}</div>
+              <a
+                :href="`/ruas-jalan/${prop.ruas_code ?? ''}`"
+                class="text-blue-600 underline"
+              >Lihat Ruas</a>
+
+              <img
+                v-if="props.info.image"
+                :src="props.info.image"
+                class="mt-3 rounded max-h-60 w-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </AppLayout>
 </template>
+

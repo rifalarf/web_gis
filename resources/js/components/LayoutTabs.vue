@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { useLayout } from '@/composables/useLayout'
+import { layout, updateLayout } from '@/composables/useLayout'
 import { PanelTop, PanelLeft } from 'lucide-vue-next'
 
-/* composable gives you { layout , setLayout } */
-const { layout, setLayout } = useLayout()
 
 const tabs = [
   { value: 'header', Icon: PanelTop,    label: 'Header'  },
@@ -19,7 +17,7 @@ const tabs = [
     <button
       v-for="{ value, Icon, label } in tabs"
       :key="value"
-      @click="setLayout(value)"
+      @click="updateLayout(value)"
       :class="[
         'flex items-center rounded-md px-3.5 py-1.5 transition-colors',
         layout === value

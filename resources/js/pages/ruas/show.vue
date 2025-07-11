@@ -4,6 +4,7 @@ import LeafletMap from '@/components/LeafletMap.vue'
 import { Head } from '@inertiajs/vue3'
 import { type BreadcrumbItem } from '@/types'
 import type { FeatureCollection } from 'geojson'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardAction, CardFooter } from '@/components/ui/card';
 
 const props = defineProps<{
   ruas: { code: string; nm_ruas: string; kecamatan: string; panjang: string }
@@ -25,16 +26,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex h-full flex-col gap-4 rounded-xl p-4">
-      <!-- info card -->
-    <div class="rounded-xl border p-4 dark:border-sidebar-border">
-    <h2 class="text-lg font-semibold mb-2">
-        CODE: {{ props.ruas.code }}
-    </h2>
-    <p><strong>Nama Ruas:</strong> {{ props.ruas.nm_ruas }}</p>
-    <p><strong>Panjang: </strong>{{ Number(props.ruas.panjang ?? 0).toFixed(2) }} km</p>
-    <p><strong>Kecamatan:</strong> {{ props.ruas.kecamatan ?? '−' }}</p>
-    </div>
-
 
       <!-- Map -->
       <div class="relative min-h-[70vh] flex-1 rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
@@ -47,6 +38,19 @@ const breadcrumbs: BreadcrumbItem[] = [
             class="absolute inset-0 rounded-b-xl"
         />
       </div>
+
+      <!-- info card -->
+    <div class="rounded-xl border p-4 dark:border-sidebar-border">
+    <h2 class="text-lg font-semibold mb-2">
+        CODE: {{ props.ruas.code }}
+    </h2>
+    <CardContent>
+    <p><strong>Nama Ruas:</strong> {{ props.ruas.nm_ruas }}</p>
+    <p><strong>Panjang:</strong> {{ Number(props.ruas.panjang ?? 0).toFixed(2) }} km</p>
+    <p><strong>Kecamatan:</strong> {{ props.ruas.kecamatan ?? '−' }}</p>
+    </CardContent>
+    </div>
+
       <div class="rounded-xl border border-sidebar-border/70 p-4
             dark:border-sidebar-border overflow-x-auto">
         <h3 class="mb-3 text-sm font-semibold">Daftar Titik Kerusakan</h3>
