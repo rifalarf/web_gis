@@ -61,7 +61,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                dark:border-sidebar-border"
       >
         <!-- Upload controls: visible only when logged-in -->
-        <div v-if="auth.user" class="mb-6 flex flex-wrap items-center gap-4">
+        <div v-if="auth.user" class="mb-6 flex flex-wrap items-center justify-between gap-4">
           <input
             type="file"
             accept=".geojson,.json"
@@ -71,8 +71,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                    hover:file:bg-gray-50 dark:file:border-gray-600
                    dark:file:bg-gray-700 dark:hover:file:bg-gray-600"
           />
-          <button class="btn-primary"  @click="upload('insert')">Insert</button>
-          <button class="btn-secondary" @click="upload('update')">Update</button>
+          <div class="flex items-center gap-4 pr-2">
+                <button class="btn-primary" @click="upload('insert')">Insert</button>
+                <button class="btn-secondary" @click="upload('update')">Update</button>
+            </div>
+
         </div>
 
         <!-- Data table -->

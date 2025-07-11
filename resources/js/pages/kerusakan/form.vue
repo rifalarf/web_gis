@@ -8,6 +8,7 @@ import { ref, watch } from 'vue'
 import type { BreadcrumbItem } from '@/types'
 import type { FeatureCollection } from 'geojson'
 import { onMounted } from 'vue'
+import exifr from 'exifr'
 
 const geojson  = ref<FeatureCollection | null>(null)
 const pointsGJ = ref<FeatureCollection | null>(null)
@@ -37,7 +38,25 @@ const form = useForm({
 
 /* image preview */
 const preview = ref<string | null>(props.marker?.image ?? null)
-watch(() => form.photo, f => preview.value = f ? URL.createObjectURL(f) : props.marker?.image ?? null)
+watch(() => form.photo, f => {
+   preview.value = f ? URL.createObjectURL(f) : props.marker?.image ?? null
+  if (f) extractGps(f)                        // ② autopick after preview
+ })
+
+ /* ------------ ② GPS extractor ------------ */
+    async function extractGps (file: File) {
+    try {
+        // second arg cast to satisfy TS
+        const { latitude, longitude } = await (exifr as any).gps(file, true)
+        if (latitude && longitude) {
+        form.lat = +latitude.toFixed(6)
+        form.lon = +longitude.toFixed(6)
+        placePin(form.lat, form.lon)
+        }
+    } catch {
+        /* silently ignore: no GPS or unreadable EXIF */
+    }
+    }
 
 /* map config */
 const pinGJ = ref<FeatureCollection>({ type:'FeatureCollection', features: [] })
@@ -81,8 +100,6 @@ function submit() {
     )
   }
 }
-
-
 
 
 
