@@ -24,7 +24,7 @@ const streetURL = `https://www.google.com/maps?q=&layer=c&cbll=${lat},${lon}`
 /* ---------- breadcrumbs ---------- */
 const prop = (props.marker.properties ?? {}) as { id?:number; ruas_code?:string }
 const breadcrumbs: BreadcrumbItem[] = [
-  { title:'Peta',           href:'/' },
+  { title:'Dashboard',           href:'/' },
   { title:'Titik Kerusakan',href:'/kerusakan' },
   { title:`ID #${prop.id ?? props.marker.id}`, href:'#' },
 ]

@@ -105,7 +105,7 @@ function submit() {
 
 /* breadcrumbs */
 const breadcrumbs: BreadcrumbItem[] = [
-  { title:'Peta', href:'/' },
+  { title:'Dashboard', href:'/' },
   { title:'Titik Kerusakan', href:'/kerusakan' },
   { title: props.mode === 'create' ? 'Tambah' : `Edit #${props.marker?.id}`, href:'#' },
 ]

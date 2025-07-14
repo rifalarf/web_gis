@@ -21,7 +21,7 @@ const props = defineProps<{
 
 /* ───────── breadcrumbs ───────── */
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Peta',         href: '/' },
+  { title: 'Dashboard',         href: '/' },
   { title: 'Daftar Jalan', href: '/ruas-jalan' },
   { title: props.ruas.code, href: `/ruas-jalan/${props.ruas.code}` },
 ]

@@ -24,7 +24,7 @@ const props = defineProps<{
 
 /* ───── misc state ───── */
 const auth        = usePage().props.auth
-const breadcrumbs = [{ title:'Ruas', href:'/ruas-jalan' }] as BreadcrumbItem[]
+const breadcrumbs = [{ title:'Dashboard',           href:'/' },{ title:'Ruas', href:'/ruas-jalan' }] as BreadcrumbItem[]
 
 /* ───── upload helpers (unchanged) ───── */
 const file = ref<File|null>(null)
@@ -68,13 +68,13 @@ const search = ref('')
     <div class="flex flex-1 flex-col gap-4 p-4 rounded-xl">
 
       <!-- decorative placeholders -->
-      <div class="grid auto-rows-min gap-4 md:grid-cols-2">
+      <!-- <div class="grid auto-rows-min gap-4 md:grid-cols-2">
         <div v-for="n in 2" :key="n"
              class="relative h-24 overflow-hidden rounded-xl border
                     border-sidebar-border/70 dark:border-sidebar-border">
           <PlaceholderPattern/>
         </div>
-      </div>
+      </div> -->
 
       <!-- main panel -->
       <div class="relative rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">

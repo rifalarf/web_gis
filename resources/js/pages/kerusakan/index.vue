@@ -25,7 +25,7 @@ const props = defineProps<{
 
 /* ────────────────── misc state ──────────────── */
 const auth        = usePage().props.auth
-const breadcrumbs = [{ title: 'Titik Kerusakan', href: '/kerusakan' }] as BreadcrumbItem[]
+const breadcrumbs = [{ title:'Dashboard',           href:'/' }, { title: 'Titik Kerusakan', href: '/kerusakan' }] as BreadcrumbItem[]
 
 /* ────────────────── table spec ──────────────── */
 const headers = [
@@ -62,7 +62,7 @@ function destroy (id: number) {
     <div class="flex h-full flex-1 flex-col gap-4 p-4 rounded-xl">
 
       <!-- Decorative placeholders -->
-      <div class="grid auto-rows-min gap-4 md:grid-cols-2">
+      <!-- <div class="grid auto-rows-min gap-4 md:grid-cols-2">
         <div
           v-for="n in 2"
           :key="n"
@@ -70,7 +70,7 @@ function destroy (id: number) {
         >
           <PlaceholderPattern />
         </div>
-      </div>
+      </div> -->
 
       <!-- Table + Controls Section -->
       <div class="relative rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">

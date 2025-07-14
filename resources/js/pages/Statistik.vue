@@ -31,7 +31,7 @@ const rulerPath = 'M4 3H20V5H4V3ZM4 7H20V9H4V7ZM4 11H20V13H4V11ZM4 15H20V17H4V15
 <template>
   <Head title="Statistik" />
 
-  <AppLayout :breadcrumbs="[{ title:'Statistik', href:'/statistik' }]">
+  <AppLayout :breadcrumbs="[{ title:'Dashboard',           href:'/' },{ title:'Statistik', href:'/statistik' }]">
     <!-- two-col grid on md, single col on mobile -->
     <div class="flex flex-col items-center gap-6 p-6 md:grid md:grid-cols-2">
 
