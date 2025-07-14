@@ -1,78 +1,106 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue'
-import LeafletMap from '@/components/LeafletMap.vue'
-import { Head } from '@inertiajs/vue3'
+import { ref, onMounted, computed }  from 'vue'
+import AppLayout                     from '@/layouts/AppLayout.vue'
+import LeafletMap                    from '@/components/LeafletMap.vue'
+import { Head }                      from '@inertiajs/vue3'
 import type { Feature, FeatureCollection } from 'geojson'
-import type { BreadcrumbItem } from '@/types'
+import type { BreadcrumbItem }       from '@/types'
 
-/* ── props from controller ───────────────────────────── */
+/* ---------- NEW: viewer.js ---------- */
+import Viewer from 'viewerjs'
+import 'viewerjs/dist/viewer.css'
+
+/* ---------- props ---------- */
 const props = defineProps<{
-  marker: Feature
-  lines: FeatureCollection
-  info: { sta: string|null; nama_ruas: string; image: string|null }
+  marker        : Feature
+  lines         : FeatureCollection
+  info          : { sta:string|null; nama_ruas:string; image:string|null }
 }>()
 
-const prop = (props.marker.properties ?? {}) as {
-  id?: number
-  ruas_code?: string
-}
+/* ---------- lat / lon & Street-View ---------- */
+const [lon, lat] = (props.marker.geometry as any).coordinates as [number,number]
+const streetURL = `https://www.google.com/maps?q=&layer=c&cbll=${lat},${lon}`
 
-/* ── breadcrumb trail ────────────────────────────────── */
+/* ---------- breadcrumbs ---------- */
+const prop = (props.marker.properties ?? {}) as { id?:number; ruas_code?:string }
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Peta',             href: '/' },
-  { title: 'Titik Kerusakan',  href: '/kerusakan' },
-  { title: `ID #${prop.id ?? props.marker.id}`, href: '#' },
+  { title:'Peta',           href:'/' },
+  { title:'Titik Kerusakan',href:'/kerusakan' },
+  { title:`ID #${prop.id ?? props.marker.id}`, href:'#' },
 ]
 
-/* ── wrap single pin as FeatureCollection ────────────── */
-const pinGJ: FeatureCollection = {
-  type: 'FeatureCollection',
-  features: [props.marker],
-}
+/* ---------- single-pin GeoJSON ---------- */
+const pinGJ:FeatureCollection = { type:'FeatureCollection', features:[props.marker] }
+
+/* ---------- mount Viewer.js when image exists ---------- */
+const imgEl = ref<HTMLImageElement>()
+onMounted(() => {
+  if (imgEl.value) {                    // only when image is present
+    // eslint-disable-next-line no-new
+    new Viewer(imgEl.value, {
+      navbar : false,                   // hide film-strip (only 1 img)
+      title  : false,                   // no caption
+      toolbar: {
+        zoomIn: 1, zoomOut: 1, oneToOne: 1,
+        reset: 1, rotateLeft: 1, rotateRight: 1,
+        flipHorizontal: 1, flipVertical: 1,
+        fullscreen: 1,
+      },
+      hidden() { document.body.style.overflow='' },   // restore scroll
+      shown () { document.body.style.overflow='hidden' },
+    })
+  }
+})
 </script>
 
+
 <template>
-  <Head title="Detail Kerusakan" />
+  <Head :title="`Ruas ${prop.id ?? props.marker.id}`"/>
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="py-12">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-4 flex flex-col gap-4 lg:flex-row">
+    <div class="flex flex-col gap-4 p-4 lg:flex-row">
 
-        <!-- MAP PANEL -->
-        <div class="w-full lg:w-3/4">
-          <div class="relative h-[300px] sm:h-[400px] lg:h-[600px] w-full rounded-xl border dark:border-sidebar-border">
-            <LeafletMap
-              :geojson="props.lines"
-              :points-geojson="pinGJ"
-              :followPoints="true"
-              :showLegend="false"
-              :detailPopups="true"
-            />
-          </div>
+      <!-- map (unchanged) -->
+      <div class="relative flex-1 min-h-[70vh] rounded-xl border dark:border-sidebar-border">
+        <LeafletMap
+          :geojson="props.lines"
+          :points-geojson="pinGJ"
+          :autoFit="true"
+          :showLegend="false"
+          :detailPopups="true"
+          class="absolute inset-0 rounded-b-xl"
+        />
+      </div>
+
+      <!-- ▸ info card -->
+      <div class="w-full lg:w-1/4">
+        <div class="space-y-3 rounded-xl border p-6 text-sm dark:border-sidebar-border">
+
+          <div><strong>Nama Ruas:</strong> {{ props.info.nama_ruas }}</div>
+          <div><strong>STA:</strong> {{ props.info.sta ?? '−' }}</div>
+
+          <div><strong>Koordinat:</strong> {{ lat.toFixed(6) }}, {{ lon.toFixed(6) }}</div>
+          <div class="space-y-1">
+            <a :href="streetURL" target="_blank" class="text-blue-600 underline block">
+                Lihat Street View
+            </a>
+            <a :href="`/ruas-jalan/${prop.ruas_code ?? ''}`" class="text-blue-600 underline block">
+                Lihat Ruas
+            </a>
+           </div>
+
+          <!-- thumbnail (Viewer.js will hijack click) -->
+          <img
+            v-if="props.info.image"
+            :src="props.info.image"
+            ref="imgEl"
+            class="mt-3 w-full max-h-60 cursor-zoom-in rounded object-cover"
+          />
         </div>
-
-        <!-- INFO CARD -->
-        <div class="w-full lg:w-1/4">
-          <div class="rounded-xl border p-6 dark:border-sidebar-border">
-            <div class="space-y-3 text-sm">
-              <div><strong>Nama Ruas:</strong> {{ props.info.nama_ruas }}</div>
-              <div><strong>STA:</strong> {{ props.info.sta ?? '−' }}</div>
-              <a
-                :href="`/ruas-jalan/${prop.ruas_code ?? ''}`"
-                class="text-blue-600 underline"
-              >Lihat Ruas</a>
-
-              <img
-                v-if="props.info.image"
-                :src="props.info.image"
-                class="mt-3 rounded max-h-60 w-full object-cover"
-              />
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   </AppLayout>
 </template>
+
+
 

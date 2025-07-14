@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue'
-import LeafletMap from '@/components/LeafletMap.vue'
-import { Head } from '@inertiajs/vue3'
-import { type BreadcrumbItem } from '@/types'
+/* ───────── imports ───────── */
+import { Head, Link } from '@inertiajs/vue3'
+import { ref, computed } from 'vue'          /* 👈  add this */
+import AppLayout      from '@/layouts/AppLayout.vue'
+import LeafletMap     from '@/components/LeafletMap.vue'
+import type { BreadcrumbItem } from '@/types'
 import type { FeatureCollection } from 'geojson'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardAction, CardFooter } from '@/components/ui/card';
 
+import EasyDataTable  from 'vue3-easy-data-table'
+import 'vue3-easy-data-table/dist/style.css'
+import { Eye, Search } from 'lucide-vue-next'
+
+/* ───────── props FIRST (so it’s in scope) ───────── */
 const props = defineProps<{
   ruas: { code: string; nm_ruas: string; kecamatan: string; panjang: string }
   geojson: FeatureCollection
@@ -13,13 +19,33 @@ const props = defineProps<{
   markerRows: { id: number; sta: string; lat: number; lon: number }[]
 }>()
 
-
+/* ───────── breadcrumbs ───────── */
 const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Peta',        href: '/' },
-  { title: 'Daftar Jalan',href: '/ruas-jalan' },
+  { title: 'Peta',         href: '/' },
+  { title: 'Daftar Jalan', href: '/ruas-jalan' },
   { title: props.ruas.code, href: `/ruas-jalan/${props.ruas.code}` },
 ]
+
+/* ───────── table config ───────── */
+const ktHeaders = [
+  { text:'No',        value:'no', width:60,  sortable:true  },
+  { text:'STA',       value:'sta',          sortable:true  },
+  { text:'Koordinat', value:'coord',        sortable:true  },
+  { text:'Aksi',      value:'action',width:90,sortable:false},
+]
+
+const ktRows = computed(() =>
+  props.markerRows.map((r,i)=>({
+    no:i+1,
+    sta:r.sta??'–',
+    coord:`${r.lat.toFixed(6)}, ${r.lon.toFixed(6)}`,
+    id:r.id,
+  }))
+)
+
+const ktSearch = ref('')
 </script>
+
 
 <template>
   <Head :title="`Ruas ${props.ruas.code}`" />
@@ -51,41 +77,55 @@ const breadcrumbs: BreadcrumbItem[] = [
     </CardContent>
     </div>
 
-      <div class="rounded-xl border border-sidebar-border/70 p-4
-            dark:border-sidebar-border overflow-x-auto">
-        <h3 class="mb-3 text-sm font-semibold">Daftar Titik Kerusakan</h3>
+      <!-- ▼ kerusakan table (search + paging) -->
+        <div class="rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">
 
-        <table class="min-w-full text-xs">
-            <thead>
-            <tr class="border-b dark:border-gray-600">
-                <th class="py-2 text-left w-12">No</th>
-                <th class="py-2 text-left">STA</th>
-                <th class="py-2 text-left">Koordinat</th>
-                <th class="py-2 text-left w-20">Aksi</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="(row, idx) in props.markerRows" :key="row.id"
-                class="border-b hover:bg-gray-50 dark:hover:bg-gray-800
-                        dark:border-gray-600">
-                <td class="py-2">{{ idx + 1 }}</td>
-                <td class="py-2">{{ row.sta }}</td>
-                <td class="py-2">{{ row.lat.toFixed(6) }}, {{ row.lon.toFixed(6) }}</td>
-                <td class="py-2">
-                <a
-                    :href="`/kerusakan/${row.id}`"
-                    class="text-blue-600 underline"
-                >Detail</a>
-                </td>
-            </tr>
-            <tr v-if="props.markerRows.length === 0">
-                <td colspan="4" class="py-4 text-center text-gray-500">
-                Tidak ada titik kerusakan pada ruas ini.
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <!-- search bar -->
+        <div class="mb-4 flex items-center">
+            <div class="relative w-full sm:w-1/2 lg:w-1/3">
+            <input v-model="ktSearch"
+                    placeholder="Search…"
+                    class="w-full rounded-lg border px-4 py-2 pl-10 shadow-sm
+                            placeholder-gray-400 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white" />
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"/>
+            </div>
+        </div>
+
+        <!-- @ts-expect-error  easy-table ts quirks -->
+        <EasyDataTable
+            class="w-full"
+            :headers="ktHeaders"
+            :items="ktRows"
+            :search-value="ktSearch"
+            :rows-per-page="10"
+            alternating
+            header-text-direction="left"
+            table-class="border-collapse text-base"
+            body-row-class="border-t border-gray-200 dark:border-gray-700"
+            style="--easy-table-body-row-height   : 50px;
+            --easy-table-header-height : 50px;
+            --easy-table-footer-height : 50px;"
+        >
+            <!-- action button -->
+            <!-- @vue-ignore -->
+            <template #item-action="{ id }">
+            <a :href="`/kerusakan/${id}`"
+                class="flex justify-center text-blue-600 hover:text-blue-800">
+                <Eye :size="20"/>
+            </a>
+            </template>
+        </EasyDataTable>
         </div>
     </div>
   </AppLayout>
 </template>
+
+<style scoped>
+::v-deep(.vue3-easy-data-table__body td),
+::v-deep(.vue3-easy-data-table__header .header-text),
+::v-deep(.vue3-easy-data-table__footer),
+::v-deep(.vue3-easy-data-table__footer *) {
+  font-size  : 1rem;   /* Tailwind text-base */
+  line-height: 1.5rem; /* Tailwind leading-6 */
+}
+</style>

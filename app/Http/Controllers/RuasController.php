@@ -17,7 +17,7 @@ class RuasController extends Controller
     public function index()
     {
          return Inertia::render('ruas/index', [
-            'ruas' => Ruas::orderBy('code')->get(['code','nm_ruas']),
+            'ruas' => Ruas::orderBy('code')->get(['code','nm_ruas','panjang']),
         ]);
     }
 

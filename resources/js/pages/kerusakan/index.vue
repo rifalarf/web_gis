@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { Head, router, usePage } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import PlaceholderPattern from '@/components/PlaceholderPattern.vue'
+/* ────────────────── imports ────────────────── */
+import { Head, router, usePage, Link } from '@inertiajs/vue3'
+import AppLayout            from '@/layouts/AppLayout.vue'
+import PlaceholderPattern   from '@/components/PlaceholderPattern.vue'
 import type { BreadcrumbItem } from '@/types'
-import { ref } from 'vue'
+import { ref, computed }    from 'vue'
 
+import EasyDataTable        from 'vue3-easy-data-table'
+import 'vue3-easy-data-table/dist/style.css'
+
+import { Eye, Pencil, Trash2, Search } from 'lucide-vue-next'
+
+/* ────────────────── props ───────────────────── */
 const props = defineProps<{
   markers: {
     id: number
@@ -15,14 +22,35 @@ const props = defineProps<{
   }[]
 }>()
 
-const auth = usePage().props.auth
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Titik Kerusakan', href: '/kerusakan' },
+/* ────────────────── misc state ──────────────── */
+const auth        = usePage().props.auth
+const breadcrumbs = [{ title: 'Titik Kerusakan', href: '/kerusakan' }] as BreadcrumbItem[]
+
+/* ────────────────── table spec ──────────────── */
+const headers = [
+  { text: 'No',        value: 'no',       width: 60,  sortable: true },
+  { text: 'STA',       value: 'sta',                     sortable: true },
+  { text: 'Nama Ruas', value: 'nm_ruas',                 sortable: true },
+  { text: 'Koordinat', value: 'coord',                   sortable: true },
+  { text: 'Aksi',      value: 'action',   width: 110, sortable: false },
 ]
 
-function destroy(id: number) {
-  if (!confirm('Hapus marker ini?')) return
-  router.delete(route('kerusakan.destroy', id))
+const rows = computed(() =>
+  props.markers.map((m, idx) => ({
+    id:      m.id,
+    no:      idx + 1,
+    sta:     m.sta ?? '–',
+    nm_ruas: m.nm_ruas,
+    coord:   `${m.lat.toFixed(6)}, ${m.lon.toFixed(6)}`,
+  })),
+)
+
+const globalSearch = ref('')
+
+function destroy (id: number) {
+  if (confirm('Hapus marker ini?')) {
+    router.delete(route('kerusakan.destroy', id))
+  }
 }
 </script>
 
@@ -30,92 +58,105 @@ function destroy(id: number) {
   <Head title="Titik Kerusakan" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-      <!-- top placeholder cards stay for visual parity -->
+    <div class="flex h-full flex-1 flex-col gap-4 p-4 rounded-xl">
+
+      <!-- Decorative placeholders -->
       <div class="grid auto-rows-min gap-4 md:grid-cols-2">
         <div
           v-for="n in 2"
           :key="n"
-          class="relative h-24 overflow-hidden rounded-xl border
-                 border-sidebar-border/70 dark:border-sidebar-border"
+          class="relative h-24 overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
         >
           <PlaceholderPattern />
         </div>
       </div>
 
-      <!-- table card -->
-      <div
-        class="relative flex-1 rounded-xl border border-sidebar-border/70 p-6
-               dark:border-sidebar-border"
-      >
-        <!-- Add button -->
-        <div v-if="auth.user" class="mb-4">
-          <a
-            href="/kerusakan/create"
-            class="btn-primary inline-block"
-          >
-            + Tambah Marker
-          </a>
+      <!-- Table + Controls Section -->
+      <div class="relative rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">
+
+        <!-- Top controls: search + add button -->
+        <div class="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 flex-wrap">
+
+          <!-- Search input -->
+          <div class="relative w-full sm:w-1/2 lg:w-1/3">
+            <input
+                v-model="globalSearch"
+                placeholder="Search..."
+                class="rounded-lg border px-4 py-2 pl-10 shadow-sm
+                    placeholder-gray-400 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white"
+            />
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            </div>
+
+          <!-- Add button -->
+          <div v-if="auth.user" class="w-full sm:w-auto">
+            <Link href="/kerusakan/create" class="btn-primary w-full sm:w-auto block text-center">
+              + Tambah Marker
+            </Link>
+          </div>
         </div>
 
-        <!-- table -->
-        <div class="overflow-x-auto">
-          <table class="min-w-full border border-gray-300 dark:border-gray-600">
-            <thead class="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th class="px-3 py-2 text-left">No</th>
-                <th class="px-3 py-2 text-left">STA</th>
-                <th class="px-3 py-2 text-left">Nama Ruas</th>
-                <th class="px-3 py-2 text-left">Koordinat</th>
-                <th class="px-3 py-2 text-left">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(m, i) in props.markers"
-                :key="m.id"
-                class="border-t border-gray-200 dark:border-gray-700"
+        <!-- EasyDataTable -->
+        <!-- @ts-expect-error -->
+        <EasyDataTable
+          class="w-full"
+          :headers="headers"
+          :items="rows"
+          :search-value="globalSearch"
+          :rows-per-page="10"
+          :sort-by="'no'"
+          alternating
+          header-text-direction="left"
+          body-row-class="border-t border-gray-200 dark:border-gray-700"
+          table-class="border-collapse text-base"
+          :table-style="{
+                fontSize: '40px',
+                lineHeight: '3',
+            }"
+          style="
+            --easy-table-body-row-height: 50px;
+            --easy-table-header-height: 50px;
+            --easy-table-footer-height: 50px;
+          "
+        >
+          <!-- Action buttons slot -->
+          <!-- @vue-ignore -->
+          <template #item-action="{ id }">
+            <div class="flex gap-2 text-neutral-600 dark:text-neutral-300">
+              <Link :href="`/kerusakan/${id}`" class="hover:text-blue-600">
+                <Eye :size="20" />
+              </Link>
+              <Link
+                v-if="auth.user"
+                :href="`/kerusakan/${id}/edit`"
+                class="hover:text-yellow-500"
               >
-                <td class="px-3 py-2">{{ i + 1 }}</td>
-                <td class="px-3 py-2">{{ m.sta ?? '−' }}</td>
-                <td class="px-3 py-2">{{ m.nm_ruas }}</td>
-                <td class="px-3 py-2">
-                  {{ m.lat.toFixed(6) }}, {{ m.lon.toFixed(6) }}
-                </td>
-                <td class="px-3 py-2 space-x-3">
-                  <a
-                    :href="`/kerusakan/${m.id}`"
-                    class="text-blue-600 hover:underline dark:text-blue-400"
-                  >
-                    Detail
-                  </a>
-                  <!-- show CRUD only for logged-in user -->
-                  <template v-if="auth.user">
-                    <a
-                      :href="`/kerusakan/${m.id}/edit`"
-                      class="text-yellow-600 hover:underline dark:text-yellow-400"
-                    >
-                      Edit
-                    </a>
-                    <button
-                      class="text-red-600 hover:underline dark:text-red-400"
-                      @click="destroy(m.id)"
-                    >
-                      Delete
-                    </button>
-                  </template>
-                </td>
-              </tr>
-
-              <tr v-if="!props.markers.length">
-                <td colspan="5" class="px-3 py-6 text-center text-sm text-gray-500">
-                  Belum ada data.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                <Pencil :size="20" />
+              </Link>
+              <button
+                v-if="auth.user"
+                @click="destroy(id)"
+                class="hover:text-red-600"
+              >
+                <Trash2 :size="20" />
+              </button>
+            </div>
+          </template>
+        </EasyDataTable>
       </div>
     </div>
   </AppLayout>
 </template>
+
+
+<style scoped>
+::v-deep(.vue3-easy-data-table__body td),
+::v-deep(.vue3-easy-data-table__header .header-text),
+::v-deep(.vue3-easy-data-table__footer),
+::v-deep(.vue3-easy-data-table__footer *) {
+  font-size: 1rem;       /* Tailwind's text-base */
+  line-height: 1.5rem;   /* Tailwind's leading-6 */
+}
+</style>
+
+
