@@ -80,14 +80,22 @@ onMounted(() => {
           <div><strong>STA:</strong> {{ props.info.sta ?? '−' }}</div>
 
           <div><strong>Koordinat:</strong> {{ lat.toFixed(6) }}, {{ lon.toFixed(6) }}</div>
-          <div class="space-y-1">
-            <a :href="streetURL" target="_blank" class="text-blue-600 underline block">
-                Lihat Street View
-            </a>
-            <a :href="`/ruas-jalan/${prop.ruas_code ?? ''}`" class="text-blue-600 underline block">
+          <div class="flex flex-col sm:flex-row gap-2 pt-2">
+            <a
+                :href="`/ruas-jalan/${prop.ruas_code ?? ''}`"
+                class="w-full sm:w-1/2 inline-flex justify-center items-center rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium px-3 py-1 transition-all"
+            >
                 Lihat Ruas
             </a>
-           </div>
+            <a
+                :href="streetURL"
+                target="_blank"
+                class="w-full sm:w-1/2 inline-flex justify-center items-center rounded-md bg-amber-500 text-white hover:bg-amber-600 text-sm font-medium px-3 py-1 transition-all"
+            >
+                Street View
+            </a>
+            </div>
+
 
           <!-- thumbnail (Viewer.js will hijack click) -->
           <img

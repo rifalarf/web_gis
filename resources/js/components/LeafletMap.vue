@@ -14,6 +14,15 @@ import 'leaflet.fullscreen/Control.FullScreen.css'
 import 'leaflet.fullscreen'
 import 'leaflet-easybutton/src/easy-button.css'
 import 'leaflet-easybutton'
+/* ───────── damage-point popup  ───────── */
+import { router } from '@inertiajs/vue3'   //  add this once at top of file
+import Viewer       from 'viewerjs'
+import 'viewerjs/dist/viewer.css'
+
+
+/* Inertia passes auth.user to every page; we just read it once */
+import { usePage } from '@inertiajs/vue3'
+const canDelete = !!usePage().props.auth?.user
 
 
 /* ── props ─────────────────────────────────────────────── */
@@ -125,7 +134,10 @@ onMounted(() => {
             <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
             <div><strong>Panjang:</strong> ${Number(p.panjang ?? 0).toFixed(2)} km</div>
             <div><strong>Kecamatan:</strong> ${p.kecamatan ?? '−'}</div>
-            <a href="/ruas-jalan/${code}" class="text-blue-600 underline">Detail</a>
+            <a href="/ruas-jalan/${code}"
+             class="block w-full rounded-md bg-blue-600 !text-white hover:bg-blue-700 text-sm font-medium px-3 py-1 text-center transition-all">
+            Detail
+          </a>
             </div>`
 
         layer.bindPopup(html)
@@ -163,20 +175,47 @@ onMounted(() => {
     cluster.addLayer(pointLayer)
 
     function buildDamagePopup(feat: Feature, ll: L.LatLng, streetUrl: string) {
-    const p = feat.properties as any
-    const lat = ll.lat.toFixed(6)
-    const lon = ll.lng.toFixed(6)
-    return `
-        <div class="space-y-1 text-sm">
-        ${p.image ? `<img src="${p.image}" class="mb-2 max-h-32 rounded">` : ''}
-        <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
-        <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
-        <div><strong>Koordinat:</strong> ${lat}, ${lon}</div>
-        <a href="/kerusakan/${p.id}" class="text-blue-600 underline">Detail</a><br>
-        <a href="${streetUrl}" target="_blank" class="text-green-600 underline">Street View</a>
-        </div>
-    `
-    }
+        const p   = feat.properties as any
+        const lat = ll.lat.toFixed(6)
+        const lon = ll.lng.toFixed(6)
+
+        const img = p.image
+            ? `<img data-viewer class="mb-2 w-full rounded cursor-zoom-in object-cover" src="${p.image}">`
+            : ''
+
+        const del = canDelete
+            ? `<button data-del="${p.id}"
+                class="mt-2 inline-block text-red-600 hover:underline">
+                Delete
+            </button>`
+            : ''
+
+        return `
+            <div class="space-y-2 text-sm">
+            ${img}
+            <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
+            <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
+            <div><strong>Koordinat:</strong> ${lat}, ${lon}</div>
+
+            <div class="flex pt-2 gap-2">
+                <a href="/kerusakan/${p.id}"
+                class="w-1/2 inline-flex items-center justify-center rounded-md bg-blue-600 !text-white hover:bg-blue-700 text-sm font-medium px-3 py-1 transition-all">
+                Detail
+                </a>
+                <a href="${streetUrl}" target="_blank"
+                class="w-1/2 inline-flex items-center justify-center rounded-md bg-amber-500 !text-white hover:bg-amber-600 text-sm font-medium px-3 py-1 transition-all">
+                Street View
+                </a>
+            </div>
+
+            ${del}
+            </div>
+        `
+        }
+
+
+
+
 
     /* click on empty map area clears selection */
     map.on('click', (e) => {
@@ -300,7 +339,26 @@ onMounted(() => {
     position : 'bottomright'
     }).addTo(map)
 
+    /* initialise viewer / delete once popup opens */
+    map.on('popupopen', ({ popup }) => {
+  const root = popup.getElement() as HTMLElement
 
+  /* zoomable image */
+  const img = root.querySelector('[data-viewer]') as HTMLImageElement | null
+  if (img) new Viewer(img, { navbar: false, title: false, toolbar: false })
+
+  /* delete */
+  const btn = root.querySelector('[data-del]') as HTMLButtonElement | null
+  if (btn) {
+    btn.onclick = () => {
+      const id = btn.getAttribute('data-del')
+      if (id && confirm('Hapus marker ini?')) {
+        router.delete(route('kerusakan.destroy', id), { preserveState: false })
+        map.closePopup()                    // remove the now-orphan popup
+      }
+    }
+  }
+})
 
 })
 

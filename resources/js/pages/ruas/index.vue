@@ -9,6 +9,7 @@ import type { BreadcrumbItem } from '@/types'
 
 import EasyDataTable      from 'vue3-easy-data-table'
 import 'vue3-easy-data-table/dist/style.css'
+import Button from '@/components/ui/button/Button.vue'
 
 import { Eye, Trash2, Search } from 'lucide-vue-next'
 
@@ -104,8 +105,9 @@ const search = ref('')
              dark:file:border-gray-600 dark:file:bg-gray-700 dark:hover:file:bg-gray-600"
     />
     <div class="flex gap-2">
-      <button class="btn-primary"   @click="upload('insert')">Insert</button>
-      <button class="btn-secondary" @click="upload('update')">Update</button>
+        <Button variant="default" @click="upload('insert')">Insert</Button>
+        <Button variant="secondary" @click="upload('update')">Update</Button>
+
     </div>
   </div>
 </div>

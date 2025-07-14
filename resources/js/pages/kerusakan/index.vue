@@ -8,6 +8,7 @@ import { ref, computed }    from 'vue'
 
 import EasyDataTable        from 'vue3-easy-data-table'
 import 'vue3-easy-data-table/dist/style.css'
+import Button from '@/components/ui/button/Button.vue'
 
 import { Eye, Pencil, Trash2, Search } from 'lucide-vue-next'
 
@@ -90,9 +91,10 @@ function destroy (id: number) {
 
           <!-- Add button -->
           <div v-if="auth.user" class="w-full sm:w-auto">
-            <Link href="/kerusakan/create" class="btn-primary w-full sm:w-auto block text-center">
-              + Tambah Marker
-            </Link>
+            <Button as="a" href="/kerusakan/create" class="w-full sm:w-auto text-center">
+            + Tambah
+            </Button>
+
           </div>
         </div>
 
