@@ -18,7 +18,27 @@ import 'leaflet-easybutton'
 import { router } from '@inertiajs/vue3'   //  add this once at top of file
 import Viewer       from 'viewerjs'
 import 'viewerjs/dist/viewer.css'
+import { useToast } from 'vue-toastification'
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,} from '@/components/ui/dialog'
 
+const toast = useToast()
+
+const showDelDialog = ref(false)          // opened / closed flag
+const idToDelete    = ref<number|null>(null)
+
+/* actually delete after the user clicks “Ya” */
+function doDelete () {
+  if (!idToDelete.value) return
+  router.delete(route('kerusakan.destroy', idToDelete.value), {
+    preserveState: false,
+    onSuccess    : () => {
+      toast.success('Marker dihapus')
+      map.closePopup()
+    },
+    onError      : () => toast.error('Gagal menghapus'),
+  })
+  showDelDialog.value = false
+}
 
 /* Inertia passes auth.user to every page; we just read it once */
 import { usePage } from '@inertiajs/vue3'
@@ -34,6 +54,7 @@ const props = defineProps<{
   detailPopups?: boolean
   followPoints?: boolean
   formMode?: boolean
+  hideDelete?: boolean
 }>()
 
 /* ── colour palette ────────────────────────────────────── */
@@ -48,6 +69,8 @@ type KondisiKey = keyof typeof colour
 
 /* ── DOM ref ───────────────────────────────────────────── */
 const mapEl = ref<HTMLElement | null>(null)
+/* — map instance —*/
+let map!: L.Map
 
 /* ── init once mounted ─────────────────────────────────── */
 onMounted(() => {
@@ -64,7 +87,7 @@ onMounted(() => {
         },
     )
 
-    const map = L.map(mapEl.value!, { layers: [osm], zoomControl: false }).setView([-7.3, 107.91], 10)
+    map = L.map(mapEl.value!, { layers: [osm], zoomControl: false }).setView([-7.3, 107.91], 10)
 
 
     L.control.zoom({
@@ -179,6 +202,15 @@ onMounted(() => {
         const lat = ll.lat.toFixed(6)
         const lon = ll.lng.toFixed(6)
 
+        const delBtn = (!props.hideDelete && canDelete)
+        ? `<button data-del="${p.id}"
+                    class="mt-2 inline-block text-red-600 hover:underline">
+            Delete
+            </button>`
+        : ''
+
+
+
         const img = p.image
             ? `<img data-viewer class="mb-2 w-full rounded cursor-zoom-in object-cover" src="${p.image}">`
             : ''
@@ -190,28 +222,47 @@ onMounted(() => {
             </button>`
             : ''
 
-        return `
-            <div class="space-y-2 text-sm">
-            ${img}
-            <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
-            <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
-            <div><strong>Koordinat:</strong> ${lat}, ${lon}</div>
+          /* ------ form page: show ONLY coord + Street-View ------ */
+            if (props.formMode) {
+                return `
+                <div class="space-y-2 text-sm">
+                    <div><strong>Koordinat:</strong> ${lat}, ${lon}</div>
 
-            <div class="flex pt-2 gap-2">
-                <a href="/kerusakan/${p.id}"
-                class="w-1/2 inline-flex items-center justify-center rounded-md bg-blue-600 !text-white hover:bg-blue-700 text-sm font-medium px-3 py-1 transition-all">
-                Detail
-                </a>
-                <a href="${streetUrl}" target="_blank"
-                class="w-1/2 inline-flex items-center justify-center rounded-md bg-amber-500 !text-white hover:bg-amber-600 text-sm font-medium px-3 py-1 transition-all">
-                Street View
-                </a>
-            </div>
+                    <a href="${streetUrl}" target="_blank"
+                    class="block w-full rounded-md bg-amber-500 !text-white hover:bg-amber-600
+                            text-sm font-medium px-3 py-1 text-center transition-all">
+                    Street View
+                    </a>
+                </div>`
+            }
 
-            ${del}
-            </div>
-        `
-        }
+            /* ------ normal pages: full popup ------ */
+            return `
+                <div class="space-y-2 text-sm">
+                    ${img}
+                    <div><strong>STA:</strong> ${p.sta ?? '−'}</div>
+                    <div><strong>Nama Ruas:</strong> ${p.nm_ruas}</div>
+                    <div><strong>Koordinat:</strong> ${lat}, ${lon}</div>
+
+                    <div class="flex pt-2 gap-2">
+                    <a href="/kerusakan/${p.id}"
+                        class="w-1/2 inline-flex justify-center items-center rounded-md
+                                bg-blue-600 !text-white hover:bg-blue-700 text-sm font-medium
+                                px-3 py-1 transition-all">
+                        Detail
+                    </a>
+                    <a href="${streetUrl}" target="_blank"
+                        class="w-1/2 inline-flex justify-center items-center rounded-md
+                                bg-amber-500 !text-white hover:bg-amber-600 text-sm font-medium
+                                px-3 py-1 transition-all">
+                        Street View
+                    </a>
+                    </div>
+
+                    ${delBtn}
+                </div>`
+            }
+
 
 
 
@@ -351,11 +402,8 @@ onMounted(() => {
   const btn = root.querySelector('[data-del]') as HTMLButtonElement | null
   if (btn) {
     btn.onclick = () => {
-      const id = btn.getAttribute('data-del')
-      if (id && confirm('Hapus marker ini?')) {
-        router.delete(route('kerusakan.destroy', id), { preserveState: false })
-        map.closePopup()                    // remove the now-orphan popup
-      }
+      idToDelete.value     = Number(btn.dataset.del)
+      showDelDialog.value  = true          // just **open** the dialog
     }
   }
 })
@@ -366,6 +414,24 @@ onMounted(() => {
 
 <template>
   <div ref="mapEl" class="relative h-full w-full" />
+   <!-- delete-confirmation dialog -->
+  <Dialog v-model:open="showDelDialog">
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Hapus Marker?</DialogTitle>
+        <DialogDescription>
+          Yakin ingin menghapus marker ID&nbsp;<strong>{{ idToDelete }}</strong>?
+        </DialogDescription>
+      </DialogHeader>
+
+      <DialogFooter>
+        <DialogClose as-child>
+          <Button variant="secondary">Batal</Button>
+        </DialogClose>
+        <Button @click="doDelete">Ya</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <style scoped>

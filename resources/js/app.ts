@@ -1,33 +1,42 @@
-import 'leaflet/dist/leaflet.css';
-import '../css/app.css';
+/* resources/js/app.ts */
+import 'leaflet/dist/leaflet.css'
+import '../css/app.css'
 
-import { createInertiaApp } from '@inertiajs/vue3';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import type { DefineComponent } from 'vue';
-import { createApp, h } from 'vue';
-import { ZiggyVue } from 'ziggy-js';
-import { initializeTheme } from './composables/useAppearance';
-import { Toaster } from 'vue-sonner'
+import { createInertiaApp }    from '@inertiajs/vue3'
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
+import { createApp, h }         from 'vue'
+import type { DefineComponent } from 'vue'
+import { ZiggyVue }             from 'ziggy-js'
+import { initializeTheme }      from './composables/useAppearance'
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+import Toast, { POSITION }      from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
+
+const appName = import.meta.env.VITE_APP_NAME || 'Laravel'
 
 createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
-    resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
-    setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(ZiggyVue)
-            .mount(el);
-    },
-    progress: {
-        color: '#4B5563',
-    },
-});
+  title  : title => (title ? `${title} - ${appName}` : appName),
+  resolve: name  =>
+    resolvePageComponent(
+      `./pages/${name}.vue`,
+      import.meta.glob<DefineComponent>('./pages/**/*.vue')
+    ),
 
-const toastDiv = document.createElement('div')
-document.body.appendChild(toastDiv)
-createApp(Toaster).mount(toastDiv)
+  setup({ el, App, props, plugin }) {
+    createApp({ render: () => h(App, props) })
+      .use(plugin)
+      .use(ZiggyVue)
+      .use(Toast, {
+        position  : POSITION.TOP_CENTER,
+        timeout   : 3000,
+        draggable : false,
+        showCloseButtonOnHover: true,
+        hideProgressBar: true,
+      })
+      .mount(el)
+  },
 
-// This will set light / dark mode on page load...
-initializeTheme();
+  progress: { color: '#4B5563' },
+})
+
+initializeTheme()   // keep this one-liner

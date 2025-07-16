@@ -11,7 +11,7 @@ const auth = computed(() => usePage().props.auth)
 const sidebarNavItems = computed(() => {
   const items = [
     {
-        title:'Appearance',
+        title:'Tampilan',
         href:'/settings/appearance'
     },   // always visible
     {
@@ -21,7 +21,7 @@ const sidebarNavItems = computed(() => {
   ]
     if (auth.value.user) {
     items.unshift({
-        title:'Profile',
+        title:'Profil',
         href:'/settings/profile'
     })
     }

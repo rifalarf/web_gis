@@ -4,14 +4,28 @@ import SettingsLayout  from '@/layouts/settings/Layout.vue'
 import HeadingSmall    from '@/components/HeadingSmall.vue'
 import LayoutTabs      from '@/components/LayoutTabs.vue'
 import { Head }        from '@inertiajs/vue3'
+
+import { type BreadcrumbItem } from '@/types';
+
+const breadcrumbItems: BreadcrumbItem[] = [
+    {
+        title: 'Layout settings',
+        href: '/settings/layout',
+    },
+];
+
 </script>
 
+
 <template>
-  <AppLayout :breadcrumbs="[{ title: 'Layout', href: '/settings/layout' }]">
+  <AppLayout :breadcrumbs="breadcrumbItems">
     <Head title="Layout settings" />
 
     <SettingsLayout>
-      <HeadingSmall title="Choose application layout" />
+            <div class="space-y-6">
+                <HeadingSmall title="Pengaturan layout" description="Perbarui pengaturan layout Anda" />
+                <AppearanceTabs />
+            </div>
       <LayoutTabs />
     </SettingsLayout>
   </AppLayout>

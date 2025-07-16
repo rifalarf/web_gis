@@ -41,7 +41,7 @@ function closeModal () {
   <div class="space-y-6">
     <HeadingSmall
       title="Hapus semua ruas"
-      description="Menghapus seluruh ruas dan segmen — tindakan permanen."
+      description="Menghapus seluruh ruas dan data yang terkait — tindakan permanen."
     />
 
     <div class="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4

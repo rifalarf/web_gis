@@ -23,11 +23,22 @@ Route::get('/ruas-jalan/{code}',   [RuasController::class,'show']);
 
 
 Route::middleware('auth')->group(function () {
-    Route::post   ('/geojson/upload', [GeojsonController::class,'upload'])
+
+    /*  geojson upload wizard  */
+    Route::get ('/ruas-jalan/upload/{mode}', [GeojsonController::class,'create'])
+         ->whereIn('mode', ['insert','update'])          // only 2 values
+         ->name('geojson.form');                         // ->route('geojson.form', 'insert')
+
+    Route::post('/ruas-jalan/upload',        [GeojsonController::class,'upload'])
          ->name('geojson.upload');
-    Route::delete('/ruas-jalan/{code}',     [GeojsonController::class,'destroy'])
+
+    /*  existing delete  */
+    Route::delete('/ruas-jalan/{code}',      [GeojsonController::class,'destroy'])
          ->name('ruas.destroy');
 });
+
+
+
 
 Route::get('/api/kerusakan.geojson', [KerusakanApiController::class,'index']);
 

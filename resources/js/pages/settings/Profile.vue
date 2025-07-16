@@ -48,11 +48,11 @@ const submit = () => {
 
         <SettingsLayout>
             <div class="flex flex-col space-y-6">
-                <HeadingSmall title="Profile information" description="" />
+                <HeadingSmall title="Informasi Profil" description="" />
 
                 <form @submit.prevent="submit" class="space-y-6">
                     <div class="grid gap-2">
-                    <Label for="name">Name</Label>
+                    <Label for="name">Nama</Label>
                     <Input
                         id="name"
                         class="mt-1 block w-full"
@@ -66,7 +66,7 @@ const submit = () => {
                     </div>
 
                     <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">Email</Label>
                     <Input
                         id="email"
                         type="email"

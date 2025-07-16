@@ -60,14 +60,15 @@ onMounted(() => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="flex flex-col gap-4 p-4 lg:flex-row">
 
-      <!-- map (unchanged) -->
+      <!-- map -->
       <div class="relative flex-1 min-h-[70vh] rounded-xl border dark:border-sidebar-border">
         <LeafletMap
           :geojson="props.lines"
           :points-geojson="pinGJ"
           :autoFit="true"
-          :showLegend="false"
+          :showLegend="true"
           :detailPopups="true"
+          :hideDelete="true"
           class="absolute inset-0 rounded-b-xl"
         />
       </div>

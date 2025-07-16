@@ -9,6 +9,7 @@ use Clickbar\Magellan\IO\Parser\Geojson\GeoJsonParser;
 use Clickbar\Magellan\Data\Geometries\MultiLineString;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Inertia\Inertia;
 
 class GeojsonController extends Controller
 {
@@ -96,4 +97,12 @@ class GeojsonController extends Controller
         Cache::forget('segments_geojson');
         return back()->with('success', "Ruas $code deleted.");
     }
+    public function create(string $mode)
+    {
+        // just pass the mode to the Vue page
+        return Inertia::render('ruas/GeojsonForm', ['mode' => $mode]);
+    }
+
 }
+
+
