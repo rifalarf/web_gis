@@ -77,6 +77,14 @@ onMounted(() => {
       <div class="w-full lg:w-1/4">
         <div class="space-y-3 rounded-xl border p-6 text-sm dark:border-sidebar-border">
 
+            <!-- thumbnail (Viewer.js will hijack click) -->
+          <img
+            v-if="props.info.image"
+            :src="props.info.image"
+            ref="imgEl"
+            class="mt-3 w-full max-h-60 cursor-zoom-in rounded object-cover"
+          />
+
           <div><strong>Nama Ruas:</strong> {{ props.info.nama_ruas }}</div>
           <div><strong>STA:</strong> {{ props.info.sta ?? '−' }}</div>
 
@@ -97,14 +105,6 @@ onMounted(() => {
             </a>
             </div>
 
-
-          <!-- thumbnail (Viewer.js will hijack click) -->
-          <img
-            v-if="props.info.image"
-            :src="props.info.image"
-            ref="imgEl"
-            class="mt-3 w-full max-h-60 cursor-zoom-in rounded object-cover"
-          />
         </div>
       </div>
     </div>

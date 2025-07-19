@@ -76,14 +76,14 @@ let map!: L.Map
 onMounted(() => {
     /* 1. Map & basemap layers */
     const osm  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap',
+        attribution: '',
         maxZoom: 19,
     })
     const esri = L.tileLayer(
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         {
         attribution:
-            'Tiles &copy; Esri — Source: Esri, DeLorme, NAVTEQ, USGS, etc.',
+            '',
         },
     )
 
@@ -101,10 +101,17 @@ onMounted(() => {
     map.addLayer(cluster)
 
     /* 2. Basemap switcher (top-right) */
+    const baseMaps = { "Open Street Map": osm, "Esri World Imagery": esri }
+    const overlays = { "Titik Kerusakan": cluster }
+
     L.control.layers(
-        { OpenStreetMap: osm, Esri: esri },
-        {},
-        { position: 'topright', collapsed: false },
+      baseMaps,
+      overlays,
+      {
+        position:'topright',
+        collapsed:true,
+
+      },
     ).addTo(map)
 
 
@@ -469,6 +476,13 @@ onMounted(() => {
   height: 20px;
   display: block;
   margin: 4px auto 0 auto; /* top | horizontal | bottom */
+}
+
+::v-deep .leaflet-control-layers label {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 </style>
