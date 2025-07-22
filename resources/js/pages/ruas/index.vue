@@ -17,7 +17,7 @@ import {
   DialogHeader, DialogTitle, DialogDescription,
   DialogFooter, DialogClose,
 }                         from '@/components/ui/dialog'
-
+import { Plus, Upload } from 'lucide-vue-next'
 import { Eye, Trash2, Search } from 'lucide-vue-next'
 import { useToast }            from 'vue-toastification'
 
@@ -104,9 +104,13 @@ function destroyRow (code:string) {
 
           <!-- upload buttons -->
           <div v-if="auth.user" class="flex gap-2">
-            <Button as="a" :href="route('geojson.form', 'insert')">Insert</Button>
+            <Button as="a" :href="route('geojson.form', 'insert')">
+                <Plus class="w-4 h-4 mr-2" />
+                Tambah
+            </Button>
             <Button as="a" variant="secondary" :href="route('geojson.form', 'update')">
-              Update
+                <Upload class="w-4 h-4 mr-2" />
+                Update
             </Button>
           </div>
         </div>
@@ -141,9 +145,11 @@ function destroyRow (code:string) {
               <!-- delete with confirmation dialog -->
               <Dialog>
                 <DialogTrigger as-child>
+                  <div v-if="auth.user">
                   <button class="hover:text-red-600">
                     <Trash2 :size="20" />
                   </button>
+                  </div>
                 </DialogTrigger>
 
                 <DialogContent>

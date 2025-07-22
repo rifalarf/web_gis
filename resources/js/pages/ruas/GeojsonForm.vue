@@ -147,7 +147,7 @@ function reallyUpload(){
 const breadcrumbs:BreadcrumbItem[]=[
   { title:'Dashboard',    href:'/' },
   { title:'Daftar Jalan', href:'/ruas-jalan' },
-  { title: props.mode==='insert' ? 'Insert GeoJSON' : 'Update GeoJSON', href:'#' },
+  { title: props.mode==='insert' ? 'Tambah Ruas Jalan' : 'Update Ruas Jalan', href:'#' },
 ]
 
 onMounted(initMap)
@@ -168,7 +168,7 @@ watch(file,v=>{ if(!v) recolourBase(new Set()) })
             <h2 class="mb-4 text-lg font-semibold">
               {{ breadcrumbs[2].title }}
             </h2>
-
+            <label class="block mb-1 font-medium">Geojson</label>
             <input
               type="file"
               accept=".geojson,.json"
