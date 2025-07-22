@@ -2,11 +2,13 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Models\User;
 
-return new class extends \Illuminate\Database\Seeder {
+class DatabaseSeeder extends Seeder
+{
     public function run(): void
     {
         User::updateOrCreate(
@@ -19,4 +21,4 @@ return new class extends \Illuminate\Database\Seeder {
             ]
         );
     }
-};
+}
