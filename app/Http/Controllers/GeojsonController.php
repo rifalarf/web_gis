@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests\GeojsonUploadRequest;
 use App\Models\{Ruas, Segment};
-use Clickbar\Magellan\IO\Parser\Geojson\GeoJsonParser;
+use Clickbar\Magellan\IO\Parser\Geojson\GeojsonParser;
 use Clickbar\Magellan\Data\Geometries\MultiLineString;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -67,7 +67,7 @@ class GeojsonController extends Controller
                 foreach ($features as $f) {
                     $p = $f['properties'];
                     $rawGeometry = json_encode($f['geometry']);        // just the geometry block!
-                    $geometry    = app(GeoJsonParser::class)->parse($rawGeometry);
+                    $geometry    = app(GeojsonParser::class)->parse($rawGeometry);
                     $rawKondisi = $p['Kondisi'] ?? null;
                     /** @var MultiLineString $geometry */
 
