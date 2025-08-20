@@ -13,77 +13,78 @@ use Inertia\Inertia;
 
 class GeojsonController extends Controller
 {
-    public function upload(GeojsonUploadRequest $request)
+    public function upload(Request $request)
     {
-        // 1) decode the file
-        $data = json_decode(file_get_contents($request->file('file')->path()), true);
+        $request->validate([
+            'files'   => 'required|array',
+            'files.*' => 'file|mimes:json,geojson',
+            'mode'    => 'required|in:insert,update',
+        ]);
 
-        // 2) group features by CODE
-        $groups = collect($data['features'])
-            ->groupBy(fn ($f) => $f['properties']['CODE']);
+        Cache::forget('segments_geojson');
 
-        DB::transaction(function () use ($groups, $request) {
-            Cache::forget('segments_geojson');
+        DB::transaction(function () use ($request) {
+            foreach ($request->file('files') as $file) {
+                $geojson    = json_decode($file->get(), true);
+                $features   = collect($geojson['features']);
+                $mode       = $request->mode;
 
-            foreach ($groups as $code => $features) {
+                // group features by CODE
+                $featuresByCode = $features->groupBy('properties.CODE');
 
-                $first = $features->first()['properties'];
-                $ruasExists = Ruas::where('code', $code)->exists();
-                $mode       = $request->mode;           // insert | update
+                foreach ($featuresByCode as $code => $features) {
+                    if (empty($code)) continue;
 
-                if ($mode === 'insert' && $ruasExists) {
-                    continue;                           // skip existing
-                }
-                if ($mode === 'update' && ! $ruasExists) {
-                    continue;                           // skip unknown
-                }
+                    $first      = $features->first()['properties'];
+                    $ruasExists = Ruas::where('code', $code)->exists();
 
-                // 3) create ruas row when needed
-                if (! $ruasExists) {
-                    $ruas = Ruas::firstOrCreate(
-                        ['code' => $code],
-                        ['nm_ruas' => $first['Nm_Ruas'] ?? 'Tanpa Nama']
-                    );
+                    if ($mode === 'insert' && $ruasExists) {
+                        continue;
+                    }
+                    if ($mode === 'update' && !$ruasExists) {
+                        continue;
+                    }
+
+                    // create or update ruas row
+                    $ruas = Ruas::firstOrNew(['code' => $code]);
                     $ruas->fill([
-                        'kon_baik'     => $first['Kon_Baik'],
-                        'kon_sdg'      => $first['Kon_Sdg'],
-                        'kon_rgn'      => $first['Kon_Rgn'],
-                        'kon_rusak'    => $first['Kon_Rusak'],
-                        'kon_mntp'     => $first['Kon_Mntp']    ?? ($first['Kon_Baik'] + $first['Kon_Sdg']),
-                        'kon_t_mntp'   => $first['Kon_T_Mntp']  ?? ($first['Kon_Rgn']  + $first['Kon_Rusak']),
-                        'panjang'      => $first['Panjang'],
-                        'kecamatan'    => $first['Kecamatan'],
+                        'nm_ruas'      => $first['Nm_Ruas'] ?? 'Tanpa Nama',
+                        'kon_baik'     => $first['Kon_Baik'] ?? null,
+                        'kon_sdg'      => $first['Kon_Sdg'] ?? null,
+                        'kon_rgn'      => $first['Kon_Rgn'] ?? null,
+                        'kon_rusak'    => $first['Kon_Rusak'] ?? null,
+                        'kon_mntp'     => $first['Kon_Mntp'] ?? (($first['Kon_Baik'] ?? 0) + ($first['Kon_Sdg'] ?? 0)),
+                        'kon_t_mntp'   => $first['Kon_T_Mntp'] ?? (($first['Kon_Rgn'] ?? 0) + ($first['Kon_Rusak'] ?? 0)),
+                        'panjang'      => $first['Panjang'] ?? null,
+                        'kecamatan'    => $first['Kecamatan'] ?? null,
                     ])->save();
 
+                    // update mode wipes old segments for this ruas
+                    if ($mode === 'update') {
+                        Segment::where('ruas_code', $code)->delete();
+                    }
 
-                }
+                    // insert all segments for this ruas
+                    foreach ($features as $f) {
+                        $p = $f['properties'];
+                        $rawGeometry = json_encode($f['geometry']);
+                        $geometry    = app(GeojsonParser::class)->parse($rawGeometry);
+                        $rawKondisi = $p['Kondisi'] ?? null;
+                        $kondisi = match (strtolower(trim($rawKondisi ?? ''))) {
+                            'rusak ringan' => 'rusak_ringan',
+                            'rusak berat'  => 'rusak_berat',
+                            'baik', 'sedang' => strtolower(trim($rawKondisi)),
+                            default        => null,
+                        };
 
-                // 4) update mode wipes old segments
-                if ($mode === 'update') {
-                    Segment::where('ruas_code', $code)->delete();
-                }
-
-                // 5) insert all segments
-                foreach ($features as $f) {
-                    $p = $f['properties'];
-                    $rawGeometry = json_encode($f['geometry']);        // just the geometry block!
-                    $geometry    = app(GeojsonParser::class)->parse($rawGeometry);
-                    $rawKondisi = $p['Kondisi'] ?? null;
-                    /** @var MultiLineString $geometry */
-
-                    $kondisi = match (strtolower(trim($rawKondisi))) {
-                        'rusak ringan' => 'rusak_ringan',
-                        'rusak berat'  => 'rusak_berat',
-                        default        => $rawKondisi,               // "baik", "sedang", or null
-                    };
-
-                    Segment::create([
-                        'ruas_code' => $code,
-                        'sta'       => $p['STA']       ?? null,
-                        'jens_perm' => $p['Jens_Perm'] ?? null,
-                        'kondisi'   => $kondisi,
-                        'geometry'  => $geometry,
-                    ]);
+                        Segment::create([
+                            'ruas_code' => $code,
+                            'sta'       => $p['STA']       ?? null,
+                            'jens_perm' => $p['Jens_Perm'] ?? null,
+                            'kondisi'   => $kondisi,
+                            'geometry'  => $geometry,
+                        ]);
+                    }
                 }
             }
         });

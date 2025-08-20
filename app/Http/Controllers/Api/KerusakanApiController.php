@@ -21,7 +21,7 @@ class KerusakanApiController extends Controller
                     'nm_ruas'   => $k->ruas->nm_ruas,
                     'sta'       => $k->sta,
                     'image'     => $k->image_path
-                        ? asset('storage/'.$k->image_path)
+                        ? (str_starts_with($k->image_path, 'http') ? $k->image_path : asset('storage/'.$k->image_path))
                         : null,
                 ],
                 'geometry' => $k->point->jsonSerialize(),

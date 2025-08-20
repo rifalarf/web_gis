@@ -30,8 +30,8 @@ const colour = {
 type KondisiKey = keyof typeof colour
 
 /* ─── inertia form + file ref ───────────────────────────── */
-const form = useForm({ file:null as File|null, mode:props.mode })
-const file = ref<File|null>(null)
+const form = useForm({ files:[] as File[], mode:props.mode })
+const files = ref<FileList|null>(null)
 
 /* ─── leaflet refs ──────────────────────────────────────── */
 const mapEl       = ref<HTMLElement|null>(null)
@@ -104,35 +104,42 @@ function recolourBase(codes:Set<string>){
 
 /* file-input handler */
 async function onFile(e:Event){
-  const f = (e.target as HTMLInputElement).files?.[0] ?? null
-  file.value = f
-  form.file  = f
+  const f = (e.target as HTMLInputElement).files ?? null
+  files.value = f
+  form.files  = f ? Array.from(f) : []
 
   if (previewLay){ previewLay.remove(); previewLay=null }
   recolourBase(new Set())
 
-  if(!f) return
-  try{
-    const gj:FeatureCollection = JSON.parse(await f.text())
+  if(!f || f.length === 0) return
 
-    previewLay = L.geoJSON(gj,{
+  try{
+    const allFeatures: any[] = []
+    for (const file of Array.from(f)) {
+        const gj: FeatureCollection = JSON.parse(await file.text())
+        allFeatures.push(...gj.features)
+    }
+
+    const combinedGJ: FeatureCollection = { type: 'FeatureCollection', features: allFeatures }
+
+    previewLay = L.geoJSON(combinedGJ,{
       style:{ color:'#3388ff', weight:4, dashArray:'4 2' },
       onEachFeature:(f,l)=>l.bindPopup(popupHtml(f.properties)),
     }).addTo(map)
 
     const codes = new Set(
-      gj.features.map(f=>(f.properties as any).CODE).filter(Boolean),
+      allFeatures.map(f=>(f.properties as any).CODE).filter(Boolean),
     )
     recolourBase(codes)
 
     const grp = L.featureGroup([ baseLay, previewLay ])
     map.fitBounds(grp.getBounds(),{ padding:[20,20] })
-  }catch{ toast.error('File tidak valid GeoJSON') }
+  }catch{ toast.error('Satu atau lebih file GeoJSON tidak valid') }
 }
 
 /* ── upload after confirmation ─────────────────────────── */
 function reallyUpload(){
-  if(!file.value){ toast.error('Pilih file GeoJSON dulu'); return }
+  if(!files.value || files.value.length === 0){ toast.error('Pilih file GeoJSON dulu'); return }
   form.post(route('geojson.upload'),{
     onSuccess:()=>{
       toast.success(`GeoJSON ${props.mode==='insert' ? 'ditambah' : 'di-update'}`)
@@ -151,7 +158,7 @@ const breadcrumbs:BreadcrumbItem[]=[
 ]
 
 onMounted(initMap)
-watch(file,v=>{ if(!v) recolourBase(new Set()) })
+watch(files,v=>{ if(!v) recolourBase(new Set()) })
 </script>
 
 <template>
@@ -173,10 +180,14 @@ watch(file,v=>{ if(!v) recolourBase(new Set()) })
               type="file"
               accept=".geojson,.json"
               @change="onFile"
+              multiple
               class="file:mr-2 file:rounded-lg file:border file:bg-white file:px-3 file:py-1
-                     mb-4 block w-full rounded border px-3 py-2 text-sm
+                     mb-2 block w-full rounded border px-3 py-2 text-sm
                      dark:border-neutral-600 dark:bg-neutral-800"
             />
+            <div v-if="files && files.length > 0" class="text-xs text-gray-500 dark:text-gray-400">
+              {{ files.length }} file dipilih.
+            </div>
 
             <!-- confirmation dialog -->
             <Dialog>
