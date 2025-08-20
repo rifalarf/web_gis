@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Cloudinary\Cloudinary; // added
 
 class KerusakanController extends Controller
 {
@@ -57,9 +58,19 @@ class KerusakanController extends Controller
 
         /* handle photo upload ------------------------------------------------ */
         if ($request->file('photo')) {
-            $data['image_path'] = $request
-                ->file('photo')
-                ->store('kerusakan', 'public'); // storage/kerusakan/…
+            // if CLOUDINARY_URL set, upload to Cloudinary, otherwise fallback to local storage
+            if (env('CLOUDINARY_URL')) {
+                $cloudinary = new Cloudinary(env('CLOUDINARY_URL'));
+                $upload = $cloudinary->uploadApi()->upload(
+                    $request->file('photo')->getRealPath(),
+                    ['folder' => 'kerusakan']
+                );
+                $data['image_path'] = $upload['secure_url'] ?? null;
+            } else {
+                $data['image_path'] = $request
+                    ->file('photo')
+                    ->store('kerusakan', 'public'); // storage/kerusakan/…
+            }
         }
 
         /* make Point geometry (lon, lat, srid) ------------------------------ */
@@ -164,11 +175,10 @@ class KerusakanController extends Controller
     }
 
     /* -----------------------------------------------------------------
-       Update (to be implemented later)
+       Update (only changed part)
     ----------------------------------------------------------------- */
     public function update(Request $request, Kerusakan $kerusakan)
     {
-        /* 1. validate ---------------------------------------------------------- */
         $data = $request->validate([
             'ruas_code' => 'required|exists:ruas,code',
             'sta'       => 'nullable|string|max:50',
@@ -181,11 +191,34 @@ class KerusakanController extends Controller
         if ($request->file('photo')) {
             // delete old
             if ($kerusakan->image_path) {
-                Storage::disk('public')->delete($kerusakan->image_path);
+                // if stored on Cloudinary try to remove by public_id, else delete local
+                if (env('CLOUDINARY_URL') && str_contains($kerusakan->image_path, 'res.cloudinary.com')) {
+                    if (preg_match('#/upload/(?:v\d+/)?(.+)\.[a-zA-Z0-9]+$#', $kerusakan->image_path, $m)) {
+                        $publicId = $m[1];
+                        try {
+                            $cloudinary = new Cloudinary(env('CLOUDINARY_URL'));
+                            $cloudinary->uploadApi()->destroy($publicId);
+                        } catch (\Throwable $e) {
+                            // ignore deletion errors
+                        }
+                    }
+                } else {
+                    Storage::disk('public')->delete($kerusakan->image_path);
+                }
             }
-            $data['image_path'] = $request
-                ->file('photo')
-                ->store('kerusakan', 'public');
+
+            if (env('CLOUDINARY_URL')) {
+                $cloudinary = new Cloudinary(env('CLOUDINARY_URL'));
+                $upload = $cloudinary->uploadApi()->upload(
+                    $request->file('photo')->getRealPath(),
+                    ['folder' => 'kerusakan']
+                );
+                $data['image_path'] = $upload['secure_url'] ?? null;
+            } else {
+                $data['image_path'] = $request
+                    ->file('photo')
+                    ->store('kerusakan', 'public');
+            }
         }
 
         /* 3. geometry ---------------------------------------------------------- */
@@ -213,7 +246,20 @@ class KerusakanController extends Controller
 
         /* remove file if exists */
         if ($k->image_path) {
-            Storage::disk('public')->delete($k->image_path);
+            // try delete from Cloudinary if applicable, otherwise delete local file
+            if (env('CLOUDINARY_URL') && str_contains($k->image_path, 'res.cloudinary.com')) {
+                if (preg_match('#/upload/(?:v\d+/)?(.+)\.[a-zA-Z0-9]+$#', $k->image_path, $m)) {
+                    $publicId = $m[1];
+                    try {
+                        $cloudinary = new Cloudinary(env('CLOUDINARY_URL'));
+                        $cloudinary->uploadApi()->destroy($publicId);
+                    } catch (\Throwable $e) {
+                        // ignore
+                    }
+                }
+            } else {
+                Storage::disk('public')->delete($k->image_path);
+            }
         }
 
         $k->delete();
