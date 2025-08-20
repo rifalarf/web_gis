@@ -51,8 +51,9 @@ const rows = computed(() =>
   props.ruas.map((r, i) => ({
     no      : i + 1,
     nm_ruas : r.nm_ruas,
-    panjang : `${r.panjang.toFixed(2)} km`,
+    panjang : `${Number(r.panjang).toFixed(2)} km`,
     code    : r.code,
+    nm_ruas : r.nm_ruas,
   })),
 )
 
