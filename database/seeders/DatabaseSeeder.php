@@ -11,15 +11,25 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'admin@root.com'],
-            [
-                'name'              => 'Admin',
-                'password'          => Hash::make('root'),
-                'email_verified_at' => now(),
-                'remember_token'    => Str::random(10),
-            ]
-        );
+        \App\Models\User::updateOrCreate(
+        ['email' => 'admin@root.com'],
+        [
+            'name'              => 'Admin',
+            'password'          => \Illuminate\Support\Facades\Hash::make('root'),
+            'email_verified_at' => now(),
+            'remember_token'    => \Illuminate\Support\Str::random(10),
+        ]
+    );
+
+    \App\Models\User::updateOrCreate(
+        ['email' => 'admin@mimin.com'],
+        [
+            'name'              => 'Mimin',
+            'password'          => \Illuminate\Support\Facades\Hash::make('mimin'),
+            'email_verified_at' => now(),
+            'remember_token'    => \Illuminate\Support\Str::random(10),
+        ]
+    );
     }
 }
 
