@@ -144,9 +144,7 @@ class KerusakanController extends Controller
         'info'   => [
             'sta'       => $kerusakan->sta,
             'nama_ruas' => $ruas->nm_ruas ?? '—',
-            'image'     => $kerusakan->image_path
-                ? asset('storage/'.$kerusakan->image_path)
-                : null,
+            'image'     => $kerusakan->image_path,
         ],
     ]);
 }
@@ -167,7 +165,7 @@ class KerusakanController extends Controller
                 'sta'       => $k->sta,
                 'lat'       => $k->point->getY(),
                 'lon'       => $k->point->getX(),
-                'image'     => $k->image_path ? asset('storage/'.$k->image_path) : null,
+                'image'     => $k->image_path,
             ],
             'ruasOptions' => Ruas::orderBy('nm_ruas')
                             ->get(['code AS value', 'nm_ruas AS label']),

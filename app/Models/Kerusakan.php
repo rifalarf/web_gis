@@ -35,7 +35,7 @@ class Kerusakan extends Model
                 'ruas_code' => $this->ruas_code,
                 'nm_ruas'   => $this->ruas->nm_ruas ?? '',
                 'sta'       => $this->sta,
-                'image'     => $this->image_path ? asset('storage/'.$this->image_path) : null,
+                'image'     => $this->image_path,
             ],
         ];
     }
