@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute; // Import Attribute
 
 class Ruas extends Model
 {
@@ -11,9 +12,19 @@ class Ruas extends Model
     public    $incrementing = false;
     protected $keyType     = 'string';
 
-    protected $fillable = ['code','nm_ruas',
-    'kon_baik','kon_sdg','kon_rgn','kon_rusak',
-    'kon_mntp','kon_t_mntp','panjang','kecamatan',];
+    protected $fillable = [
+        'code', 'nm_ruas', 'panjang', 'kecamatan',
+        'kon_baik', 'kon_sdg', 'kon_rgn', 'kon_rusak',
+        'kon_mntp', 'kon_t_mntp',
+    ];
+
+    // Tambahkan accessor ini untuk memastikan 'panjang' tidak pernah null
+    protected function panjang(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ?? 0,
+        );
+    }
 
     public function segments()
     {
