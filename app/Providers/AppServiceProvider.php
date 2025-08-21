@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\URL; // 1. Import a fasad URL
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // 2. Tambahkan blok if ini
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
 }

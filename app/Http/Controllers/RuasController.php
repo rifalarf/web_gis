@@ -16,8 +16,20 @@ class RuasController extends Controller
      */
     public function index()
     {
-         return Inertia::render('ruas/index', [
-            'ruas' => Ruas::orderBy('code')->get(['code','nm_ruas','panjang']),
+        // 1. Ambil semua data ruas menggunakan model Eloquent.
+        $allRuas = Ruas::all();
+
+        // 2. Transformasi koleksi untuk memastikan format data yang benar.
+        //    Ini adalah langkah paling penting untuk memperbaiki error.
+        $ruas = $allRuas->map(fn ($r) => [
+            'code'    => $r->code,
+            'nm_ruas' => $r->nm_ruas,
+            'panjang' => $r->panjang ?? 0, // Memastikan 'panjang' selalu berupa angka.
+        ]);
+
+        // 3. Kirim data yang sudah bersih ke komponen Vue.
+        return Inertia::render('ruas/index', [
+            'ruas' => $ruas,
         ]);
     }
 
